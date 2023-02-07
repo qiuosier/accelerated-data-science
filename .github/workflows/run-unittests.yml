@@ -60,6 +60,7 @@ jobs:
         run: |
           set -x # print commands that are executed
           mkdir -p ~/.oci
+          ls -lha
           echo "$ADS_OCI_CONFIG_REALLIKE" > "~/.oci/config"
           coverage erase
           ./scripts/runtox.sh "${{ matrix.python-version }}-${{ matrix.tests-type }}" --cov --cov-report=
