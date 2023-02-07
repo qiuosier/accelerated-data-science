@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import os
 import time
 import uuid
 from io import DEFAULT_BUFFER_SIZE
+from string import Template
 from typing import Any, Dict, List, Optional, Union
 
 import fsspec
@@ -33,6 +34,8 @@ from oci.data_science.models import JobInfrastructureConfigurationDetails
 from oci.exceptions import ServiceError
 
 logger = logging.getLogger(__name__)
+
+SLEEP_INTERVAL = 3
 
 
 class DSCJob(OCIDataScienceMixin, oci.data_science.models.Job):
@@ -471,6 +474,10 @@ class DataScienceJobRun(
 ):
     """Represents a Data Science Job run"""
 
+    _DETAILS_LINK = (
+        "https://console.{region}.oraclecloud.com/data-science/job-runs/{id}"
+    )
+
     TERMINAL_STATES = [
         oci.data_science.models.JobRun.LIFECYCLE_STATE_SUCCEEDED,
         oci.data_science.models.JobRun.LIFECYCLE_STATE_FAILED,
@@ -593,7 +600,7 @@ class DataScienceJobRun(
             print(f"{timestamp} - {status}")
         return status
 
-    def watch(self, interval: float = 3) -> DataScienceJobRun:
+    def watch(self, interval: float = SLEEP_INTERVAL) -> DataScienceJobRun:
         """Watches the job run until it finishes.
         Before the job start running, this method will output the job run status.
         Once the job start running, the logs will be streamed until the job is success, failed or cancelled.
@@ -669,7 +676,7 @@ class DataScienceJobRun(
         self.client.cancel_job_run(self.id)
         while self.lifecycle_state != "CANCELED":
             self.sync()
-            time.sleep(3)
+            time.sleep(SLEEP_INTERVAL)
         return self
 
     def __repr__(self) -> str:
@@ -1224,13 +1231,17 @@ class DataScienceJob(Infrastructure):
         for attr in ["project_id", "compartment_id"]:
             if getattr(self, attr):
                 payload[attr] = getattr(self, attr)
-        if isinstance(runtime, GitPythonRuntime) or isinstance(
+
+        if self.name:
+            display_name = Template(self.name).safe_substitute(runtime.envs)
+        elif isinstance(runtime, GitPythonRuntime) or isinstance(
             runtime, ContainerRuntime
         ):
-            payload["display_name"] = self.name or utils.get_random_name_for_resource()
+            display_name = utils.get_random_name_for_resource()
         else:
-            payload["display_name"] = self.name
+            display_name = None
 
+        payload["display_name"] = display_name
         payload["job_log_configuration_details"] = self._prepare_log_config()
 
         self.dsc_job = DSCJob(**payload)
@@ -1261,7 +1272,7 @@ class DataScienceJob(Infrastructure):
 
         Returns
         -------
-        DSCJobRun
+        DataScienceJobRun
             A Data Science Job Run instance.
 
         """
@@ -1275,6 +1286,12 @@ class DataScienceJob(Infrastructure):
             tags = {}
         if freeform_tags:
             tags.update(freeform_tags)
+
+        if name:
+            envs = self.runtime.envs
+            if env_var:
+                envs.update(env_var)
+            name = Template(name).safe_substitute(envs)
 
         return self.dsc_job.run(
             display_name=name,

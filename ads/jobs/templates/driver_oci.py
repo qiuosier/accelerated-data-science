@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 """This module runs user code from git repository.
 The following environment variables are used:
@@ -107,7 +107,9 @@ class GitManager:
             code_dir = os.environ.get("CODE_DIR")
         # Use default directory if CODE_DIR is set to None or empty string.
         if not code_dir:
-            code_dir = os.path.join(DEFAULT_CODE_DIR, os.path.basename(repo_url).split(".", 1)[0])
+            code_dir = os.path.join(
+                DEFAULT_CODE_DIR, os.path.basename(repo_url).split(".", 1)[0]
+            )
         self.code_dir = os.path.abspath(os.path.expanduser(code_dir))
 
         print(f"Initializing code directory at {self.code_dir} ...")
@@ -695,6 +697,10 @@ class ArgumentParser:
         return args, kwargs
 
 
+def substitute_output_uri(output_uri):
+    return os.path.expandvars(output_uri)
+
+
 def main():
     """The main function for running the job."""
     job_run_ocid = os.environ.get("JOB_RUN_OCID")
@@ -707,14 +713,19 @@ def main():
         runner.run(sys.argv[1:])
 
     # Copy outputs
-    if "OUTPUT_DIR" in os.environ:
-        print(f"Found OUTPUT_DIR is configured as: {os.environ['OUTPUT_DIR']}")
+    output_dir = os.environ.get("OUTPUT_DIR")
+    output_uri = os.environ.get("OUTPUT_URI")
+    if output_dir and output_uri:
+        output_uri = substitute_output_uri(output_uri)
+        print(f"Found OUTPUT_DIR is configured as: {output_dir}")
         runner.copy_artifacts(
-            output_dir=os.environ["OUTPUT_DIR"],
-            output_uri=os.environ.get("OUTPUT_URI"),
+            output_dir=output_dir,
+            output_uri=output_uri,
         )
     else:
-        print("OUTPUT_DIR is not configured. Skipping copy artifacts")
+        print(
+            "OUTPUT_DIR or OUTPUT_URI is not defined in environment variable. No output file is copied."
+        )
 
     # Save metadata only if job run OCID is available
     if job_run_ocid and "SKIP_METADATA_UPDATE" not in os.environ:

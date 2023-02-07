@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 import copy
 import datetime
 import io
@@ -15,29 +16,30 @@ from typing import Any, Dict, List, Optional
 
 import fsspec
 import oci.data_flow
+import oci.util as oci_util
 import yaml
 from ads.common import utils
 from ads.common.auth import default_signer
 from ads.common.oci_client import OCIClientFactory
 from ads.common.oci_mixin import OCIModelMixin
-from ads.common.utils import camel_to_snake, batch_convert_case
+from ads.common.utils import batch_convert_case, camel_to_snake
 from ads.config import OCI_REGION_METADATA
 from ads.jobs.builders.infrastructure.base import Infrastructure, RunInstance
 from ads.jobs.builders.infrastructure.utils import normalize_config
 from ads.jobs.builders.runtimes.python_runtime import DataFlowRuntime
 from ads.model.runtime.env_info import InferenceEnvInfo
 from oci.data_flow.models import CreateApplicationDetails, CreateRunDetails
-import oci.util as oci_util
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 CONDA_PACK_SUFFIX = "#conda"
+SLEEP_INTERVAL = 3
 
 
 def conda_pack_name_to_dataflow_config(conda_uri):
     return {
-        "spark.archives": conda_uri + CONDA_PACK_SUFFIX,  # .replace(" ", "%20")
+        "spark.archives": conda_uri + CONDA_PACK_SUFFIX,
         "dataflow.auth": "resource_principal",
     }
 
@@ -98,6 +100,9 @@ class DataFlowApp(OCIModelMixin, oci.data_flow.models.Application):
 
 
 class DataFlowRun(OCIModelMixin, oci.data_flow.models.Run, RunInstance):
+    _DETAILS_LINK = (
+        "https://console.{region}.oraclecloud.com/data-flow/runs/details/{id}"
+    )
 
     TERMINATED_STATES = [
         oci.data_flow.models.Run.LIFECYCLE_STATE_CANCELED,
@@ -162,7 +167,7 @@ class DataFlowRun(OCIModelMixin, oci.data_flow.models.Run, RunInstance):
         """
         return DataFlowLogs(run_id=self.id)
 
-    def wait(self, interval: int = 3) -> "DataFlowRun":
+    def wait(self, interval: int = SLEEP_INTERVAL) -> "DataFlowRun":
         """
         Wait for a run to terminate.
 
@@ -189,7 +194,7 @@ class DataFlowRun(OCIModelMixin, oci.data_flow.models.Run, RunInstance):
                 current = self.status
         return self
 
-    def watch(self, interval: int = 3) -> "DataFlowRun":
+    def watch(self, interval: int = SLEEP_INTERVAL) -> "DataFlowRun":
         """This is an alias of `wait()` method. It waits for a run to terminate.
 
         Parameters
@@ -223,36 +228,34 @@ class DataFlowRun(OCIModelMixin, oci.data_flow.models.Run, RunInstance):
         run["lifecycleState"] = self.status
         return yaml.safe_dump(run)
 
-    def delete(self) -> None:
+    def delete(self) -> "DataFlowRun":
         """
-        Cancel a Data Flow run if it is not yet terminated.
+        Cancel and delete a Data Flow run if it is not yet terminated.
+        Will be executed asynchronously.
 
         Returns
         -------
-        None
+        self
+            The dataflow run instance.
         """
         if self.status not in self.TERMINATED_STATES:
             self.client.delete_run(self.id)
             self.lifecycle_state = oci.data_flow.models.Run.LIFECYCLE_STATE_CANCELING
 
-    @property
-    def run_details_link(self):
-        """
-        Link to run details page in OCI console
+        return self
+
+    def cancel(self) -> "DataFlowRun":
+        """Cancel a Data Flow run if it is not yet terminated.
+        Will be executed synchronously.
 
         Returns
         -------
-        DisplayHandle
-            html display
+        self
+            The dataflow run instance.
         """
-        signer = default_signer()
-        if "region" in signer["config"]:
-            region = signer["config"]["region"]
-        else:
-            region = json.loads(OCI_REGION_METADATA)["regionIdentifier"]
-        return (
-            f"https://console.{region}.oraclecloud.com/data-flow/runs/details/{self.id}"
-        )
+        self.delete()
+        self.wait()
+        return self
 
 
 class _Log:
@@ -897,8 +900,7 @@ class DataFlow(Infrastructure):
         logger.debug(f"Creating a DataFlow Run with payload {payload}")
         run = DataFlowRun(**payload).create()
         if wait:
-            interval = kwargs["interval"] if "interval" in kwargs else 3
-            run.wait(interval)
+            run.wait(kwargs.pop("interval", SLEEP_INTERVAL))
         return run
 
     def run_list(self, **kwargs) -> List[DataFlowRun]:

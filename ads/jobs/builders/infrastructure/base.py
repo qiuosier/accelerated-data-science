@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
+import json
+
+from ads.common.auth import default_signer
+from ads.config import OCI_REGION_METADATA
 from ads.jobs.builders.base import Builder
 from ads.jobs.builders.runtimes.base import Runtime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Infrastructure(Builder):
@@ -106,6 +114,8 @@ class Infrastructure(Builder):
 
 
 class RunInstance:
+    _DETAILS_LINK = ""
+
     def create(self):
         """Create a RunInstance Object."""
         raise NotImplementedError()
@@ -120,5 +130,47 @@ class RunInstance:
         raise NotImplementedError()
 
     def delete(self):
-        """Delete or cancel a run."""
+        """Delete a run."""
         raise NotImplementedError()
+
+    def cancel(self):
+        """Cancel a run."""
+        raise NotImplementedError()
+
+    @property
+    def _region(self):
+        """Gets the current region based on the signer and env variables."""
+        signer = default_signer()
+        if "region" in signer["config"]:
+            return signer["config"]["region"]
+
+        return json.loads(OCI_REGION_METADATA)["regionIdentifier"]
+
+    @property
+    def run_details_link(self):
+        """
+        Link to run details page in OCI console
+
+        Returns
+        -------
+        str
+            The link to the details page in OCI console.
+        """
+
+        if not self._DETAILS_LINK:
+            return ""
+
+        result = ""
+        try:
+            result = self._DETAILS_LINK.format(region=self._region, id=self.id)
+            print("-" * 10)
+            print(result)
+            print("-" * 10)
+
+        except Exception as ex:
+            print(str(ex))
+            logger.info(
+                "Error occurred in attempt to extract the link to the resource. "
+                f"Details: {ex}"
+            )
+        return result
