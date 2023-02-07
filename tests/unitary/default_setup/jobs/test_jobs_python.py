@@ -23,10 +23,10 @@ class PythonRuntimeTest(DataScienceJobPayloadTest):
     """Contains tests from PythonRuntime in ADS Jobs API."""
 
     DIR_SOURCE_PATH = os.path.join(
-        os.path.dirname(__file__), "../../../integration/fixtures/job_archive"
+        os.path.dirname(__file__), "test_files/job_archive"
     )
     SCRIPT_SOUCE_PATH = os.path.join(
-        os.path.dirname(__file__), "../../../integration/fixtures/job_archive/main.py"
+        os.path.dirname(__file__), "test_files/job_archive/main.py"
     )
 
     def test_prepare_artifact_with_dir(self):
