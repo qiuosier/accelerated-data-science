@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 from __future__ import annotations
 
@@ -329,7 +329,8 @@ class NotebookRuntime(CondaRuntime):
 
     CONST_NOTEBOOK_PATH = "notebookPathURI"
     CONST_NOTEBOOK_ENCODING = "notebookEncoding"
-    CONST_OUTPUT_URI = "outputURI"
+    CONST_OUTPUT_URI = "outputUri"
+    CONST_OUTPUT_URI_ALT = "outputURI"
     CONST_EXCLUDE_TAG = "excludeTags"
 
     attribute_map = {
