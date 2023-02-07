@@ -85,6 +85,10 @@ class NotebookDriverLocalTest(NotebookDriverRunTest):
         self.assertNotIn('"ignore"', outputs)
         self.assertNotIn("'ignore'", outputs)
 
+    @pytest.mark.skipif(
+        "NoDependency" in os.environ,
+        reason="skip for dependency test: nbformat",
+    )
     def test_substitute_output_uri(self):
         envs = dict(A="foo", B="bar")
         test_cases = [
