@@ -59,9 +59,9 @@ jobs:
           ADS_OCI_CONFIG_REALLIKE: ${{ secrets.ADS_OCI_CONFIG_REALLIKE }}
         run: |
           set -x # print commands that are executed
-          mkdir -p .oci
+          mkdir -p /home/runner/.oci
           ls -lha
-          echo "$ADS_OCI_CONFIG_REALLIKE" > ".oci/config"
+          echo "$ADS_OCI_CONFIG_REALLIKE" > "/home/runner/.oci/config"
           coverage erase
           ./scripts/runtox.sh "${{ matrix.python-version }}-${{ matrix.tests-type }}" --cov --cov-report=
           coverage combine .coverage-*
