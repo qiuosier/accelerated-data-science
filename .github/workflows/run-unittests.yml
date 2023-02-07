@@ -63,7 +63,7 @@ jobs:
           mkdir -p /home/runner/.oci
           ls -lha
           echo "$ADS_OCI_CONFIG_REALLIKE" > "/home/runner/.oci/config"
-          echo "ADS_OCI_PRIVATE_KEY_REALLIKE" > "/home/runner/.oci/oci_ads_user.pem"
+          echo "$ADS_OCI_PRIVATE_KEY_REALLIKE" > "/home/runner/.oci/oci_ads_user.pem"
           echo "key_file=/home/runner/.oci/oci_ads_user.pem" >> "/home/runner/.oci/config"
           coverage erase
           ./scripts/runtox.sh "${{ matrix.python-version }}-${{ matrix.tests-type }}" --cov --cov-report=
