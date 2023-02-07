@@ -15,7 +15,6 @@ from ads.jobs.builders.infrastructure.dsc_job_runtime import (
     NotebookRuntimeHandler,
 )
 from tests.unitary.default_setup.jobs.test_jobs_base import DriverRunTest
-from ads.jobs.templates.driver_notebook import substitute_output_uri
 
 
 class NotebookDriverRunTest(DriverRunTest):
@@ -90,6 +89,7 @@ class NotebookDriverLocalTest(NotebookDriverRunTest):
         reason="skip for dependency test: nbformat",
     )
     def test_substitute_output_uri(self):
+        from ads.jobs.templates.driver_notebook import substitute_output_uri
         envs = dict(A="foo", B="bar")
         test_cases = [
             ("oci://path/to/my_$B", "oci://path/to/my_bar"),
