@@ -13,6 +13,7 @@ from ads.feature_engineering.feature_type.handler.warnings import (
 from tests.ads_unit_tests.utils import get_test_dataset_path
 import pandas as pd
 
+
 class TestFeatureTypesDefaultWarnings:
     empty_warning_df = pd.DataFrame(
         [], columns=["Warning", "Message", "Metric", "Value"]
