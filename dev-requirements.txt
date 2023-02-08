@@ -5,3 +5,4 @@ dask
 nltk
 pdfplumber
 category_encoders
+setuptools==65.6.3
