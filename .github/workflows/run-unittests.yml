@@ -50,7 +50,7 @@ jobs:
 
       - name: "Setup test env"
         run: |
-          pip install coverage pytest-codecov tox tox-conda
+          pip install coverage pytest-codecov tox
 
       - name: "Run unit tests"
         timeout-minutes: 90
