@@ -1,0 +1,7 @@
+-r test-requirements.txt
+-e .[all-optional]
+-e .[opctl]
+dask
+nltk
+pdfplumber
+category_encoders
