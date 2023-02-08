@@ -25,7 +25,7 @@ jobs:
   test:
     name: ${{ matrix.tests-type }}, python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     strategy:
       fail-fast: false
@@ -50,10 +50,10 @@ jobs:
 
       - name: "Setup test env"
         run: |
-          pip install coverage pytest-codecov tox==4.2.8
+          pip install coverage pytest-codecov tox==4.2.8 tox-conda
 
       - name: "Run unit tests"
-        timeout-minutes: 45
+        timeout-minutes: 90
         shell: bash
         env:
           ADS_OCI_CONFIG_REALLIKE: ${{ secrets.ADS_OCI_CONFIG_REALLIKE }}
