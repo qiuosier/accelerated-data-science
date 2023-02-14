@@ -51,7 +51,7 @@ jobs:
       - name: "Setup test env"
         run: |
           $CONDA/bin/conda init
-          source /home/datascience/.bashrc
+          source /home/runner/.bashrc
           pip install -r test-requirements.txt
 
       - name: "Run unit tests"
