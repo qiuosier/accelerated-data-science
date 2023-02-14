@@ -75,10 +75,8 @@ jobs:
           --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
           --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
           --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat \
-          --cov --cov-report=
+          --cov --cov-report=html
           ls -lha
-          coverage combine .coverage-*
-          coverage html -i
 
 #       Uploading test artifacts
 #       https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#uploading-build-and-test-artifacts
