@@ -48,12 +48,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: "Setup test env"
-        run: |
-          $CONDA/bin/conda init
-          source /home/runner/.bashrc
-          pip install -r test-requirements.txt
-
       - name: "Run unit tests"
         timeout-minutes: 90
         shell: bash
@@ -68,6 +62,9 @@ jobs:
           echo "$ADS_OCI_CONFIG_REALLIKE" > "/home/runner/.oci/config"
           echo "$ADS_OCI_PRIVATE_KEY_REALLIKE" > "/home/runner/.oci/oci_ads_user.pem"
           echo "key_file=/home/runner/.oci/oci_ads_user.pem" >> "/home/runner/.oci/config"
+          $CONDA/bin/conda init
+          source /home/runner/.bashrc
+          pip install -r test-requirements.txt
           coverage erase
           python -m $CONDA/bin/pytest -v -p no:warnings --durations=5 tests/unitary/default_setup \
           --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
