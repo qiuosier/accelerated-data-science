@@ -50,7 +50,9 @@ jobs:
 
       - name: "Setup test env"
         run: |
-          $CONDA/bin/conda env update --file test-requirements.txt --name base
+          $CONDA/bin/conda init
+          source /home/datascience/.bashrc
+          pip install -r test-requirements.txt
 
       - name: "Run unit tests"
         timeout-minutes: 90
