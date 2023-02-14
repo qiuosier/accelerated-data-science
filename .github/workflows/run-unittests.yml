@@ -50,7 +50,7 @@ jobs:
 
       - name: "Setup test env"
         run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
+#         $CONDA is an environment variable pointing to the root of the miniconda directory
           $CONDA/bin/conda env update --file test-requirements.txt --name base
 
       - name: "Run unit tests"
@@ -79,8 +79,8 @@ jobs:
           coverage combine .coverage-*
           coverage html -i
 
-       Uploading test artifacts
-       https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#uploading-build-and-test-artifacts
+#       Uploading test artifacts
+#       https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#uploading-build-and-test-artifacts
       - name: "Save html coverage report"
         uses: actions/upload-artifact@v3
         with:
