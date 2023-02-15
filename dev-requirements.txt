@@ -1,8 +1,20 @@
 -r test-requirements.txt
--e .[all-optional]
--e .[opctl]
+-e ".[opctl]"
+-e ".[all-optional]"
+pytest
+pytest-cov
+mock
+faker
+pyspark
+arff
+category_encoders
+pdfplumber
 dask
 nltk
-pdfplumber
-category_encoders
-setuptools==65.6.3
+py4j
+tables
+xlrd>=1.2.0
+lxml
+fastparquet
+imbalanced-learn
+pyarrow
