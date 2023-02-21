@@ -89,7 +89,7 @@ jobs:
           sudo apt-get install libkrb5-dev
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-          conda activate
+          $CONDA/bin/conda activate
           pip install setuptools
           pip install -r dev-requirements.txt
           oci os object get -ns ociodscdev -bn jize-dev --name text-extraction-tools.jar --file $CONDA_PREFIX/text-extraction-tools.jar
