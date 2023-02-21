@@ -1,10 +1,6 @@
 -r test-requirements.txt
 -e ".[opctl]"
 -e ".[all-optional]"
-pytest
-pytest-cov
-mock
-faker
 pyspark
 arff
 category_encoders

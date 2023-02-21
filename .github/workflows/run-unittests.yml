@@ -53,7 +53,6 @@ jobs:
         env:
           ADS_OCI_CONFIG_REALLIKE: ${{ secrets.ADS_OCI_CONFIG_REALLIKE }}
           ADS_OCI_PRIVATE_KEY_REALLIKE: ${{ secrets.ADS_OCI_PRIVATE_KEY_REALLIKE }}
-          NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
         run: |
           set -x # print commands that are executed
           mkdir -p /home/runner/.oci
@@ -71,7 +70,6 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-#          pip install krb5>=0.3.0
 #          pip install -r test-requirements.txt
 #          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
 #          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
@@ -84,6 +82,8 @@ jobs:
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90
         shell: bash
+        env:
+          NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
         run: |
           set -x # print commands that are executed
           sudo apt-get install libkrb5-dev
@@ -91,6 +91,8 @@ jobs:
           source /home/runner/.bashrc
           pip install setuptools
           pip install -r dev-requirements.txt
+          oci os object get -ns ociodscdev -bn jize-dev --name text-extraction-tools.jar --file $CONDA_PREFIX/text-extraction-tools.jar
+          python -c "import os; import nltk; nltk.download('punkt', download_dir=os.environ['CONDA_PREFIX'] + '/nltk'); nltk.download('averaged_perceptron_tagger',download_dir=os.environ['CONDA_PREFIX'] + '/nltk')"
           python -m pytest -v -p no:warnings --durations=5 tests/unitary \
           --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
           --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
