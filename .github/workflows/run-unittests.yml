@@ -71,9 +71,9 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-          ls -lha /etc
-          which krb5-config
-          pip install krb5>=0.3.0
+          ls -lha /user/bin
+          type krb5-config
+#          pip install krb5>=0.3.0
 #          pip install -r test-requirements.txt
 #          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
 #          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
