@@ -72,6 +72,7 @@ jobs:
           $CONDA/bin/conda init
           source /home/runner/.bashrc
           ls -lha /etc
+          which krb5-config
           pip install krb5>=0.3.0
 #          pip install -r test-requirements.txt
 #          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
