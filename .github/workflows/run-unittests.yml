@@ -71,7 +71,7 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-          ls -lha /user/bin
+          ls -lha /usr/bin
           type krb5-config
 #          pip install krb5>=0.3.0
 #          pip install -r test-requirements.txt
