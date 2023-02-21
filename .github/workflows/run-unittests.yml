@@ -71,7 +71,7 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-          yum install -y gcc
+          apt-get install gcc
           pip install -r test-requirements.txt
           python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
           --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
