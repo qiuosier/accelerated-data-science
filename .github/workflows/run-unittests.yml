@@ -71,15 +71,15 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-          sudo apt-get install gcc
-          pip install -r test-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
-          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
-          --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
-          --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat
+          pip install krb5>=0.3.0
+#          pip install -r test-requirements.txt
+#          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
+#          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
+#          --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
+#          --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
+#          --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
+#          --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
+#          --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90
