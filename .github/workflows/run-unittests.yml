@@ -92,8 +92,6 @@ jobs:
           source /home/runner/.bashrc
           pip install setuptools
           pip install -r dev-requirements.txt
-#          oci os object get -ns ociodscdev -bn jize-dev --name text-extraction-tools.jar --file $CONDA_PREFIX/text-extraction-tools.jar
-#          python -c "import os; import nltk; nltk.download('punkt', download_dir=os.environ['CONDA_PREFIX'] + '/nltk'); nltk.download('averaged_perceptron_tagger',download_dir=os.environ['CONDA_PREFIX'] + '/nltk')"
           python -m pytest -v -p no:warnings --durations=5 tests/unitary \
           --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
           --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
