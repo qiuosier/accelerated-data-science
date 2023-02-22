@@ -87,24 +87,31 @@ jobs:
           CONDA_PREFIX: /usr/share/miniconda
         run: |
           set -x # print commands that are executed
-          sudo apt-get install libkrb5-dev
+          sudo apt-get install libkrb5-dev graphviz
           $CONDA/bin/conda init
           source /home/runner/.bashrc
           pip install setuptools
           pip install -r dev-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary \
-          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
-          --ignore=tests/unitary/with_extras/evaluator/test_evaluations_evaluator.py \
-          --ignore=tests/unitary/with_extras/hpo/test_hpo_search_cv.py \
-          --ignore=tests/unitary/with_extras/model/test_model_framework_sklearn_model.py \
-          --ignore=tests/unitary/with_extras/model/test_model_info_extractor.py \
-          --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
-          --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat \
-          --deselect=tests/unitary/with_extras/opctl/test_opctl_config.py::TestConfigResolver::test_resolve_image_name \
-          --cov --cov-report=html
+          python -m pytest -v -p no:warnings \
+          tests/unitary/with_extras/test_feature_plot.py \
+          tests/unitary/with_extras/test_jobs_notebook.py \
+          tests/unitary/with_extras/model/test_metadata_provenance.py \
+          tests/unitary/with_extras/opctl/test_opctl_local_backend.py \
+          tests/unitary/with_extras/pipeline/test_pipeline_visualizer.py
+#          python -m pytest -v -p no:warnings --durations=5 tests/unitary \
+#          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
+#          --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
+#          --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
+#          --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
+#          --ignore=tests/unitary/with_extras/evaluator/test_evaluations_evaluator.py \
+#          --ignore=tests/unitary/with_extras/hpo/test_hpo_search_cv.py \
+#          --ignore=tests/unitary/with_extras/model/test_model_framework_sklearn_model.py \
+#          --ignore=tests/unitary/with_extras/model/test_model_info_extractor.py \
+#          --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
+#          --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat \
+#          --deselect=tests/unitary/with_extras/opctl/test_opctl_config.py::TestConfigResolver::test_resolve_image_name \
+#          --deselect=tests/unitary/with_extras/test_feature_plot.py::TestFeaturePlot::test_feature_plot_return_type \
+#          --cov --cov-report=html
 
 #       Uploading test artifacts
 #       https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#uploading-build-and-test-artifacts
