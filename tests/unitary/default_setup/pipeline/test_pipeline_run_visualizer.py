@@ -38,16 +38,6 @@ class TestPipelineRunVisualizer:
             uri=os.path.join(cls.artifact_dir, "sample_pipeline.yaml")
         )
 
-        # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-        # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-        # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-        test_config = {
-            "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-            "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-            "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-            "key_file": "<path>/<to>/<key_file>",
-            "region": "<region>",
-        }
         with patch.object(Pipeline, "from_ocid") as mock_pipeline_from_ocid:
             with patch.object(
                 PipelineRun,
@@ -57,17 +47,15 @@ class TestPipelineRunVisualizer:
             ):
                 mock_pipeline_from_ocid.return_value = cls.mock_pipeline
 
-                with patch("oci.config.from_file", return_value=test_config):
-                    with patch("oci.signer.load_private_key_from_file"):
-                        cls.mock_pipeline_run = PipelineRun(
-                            **{
-                                "display_name": cls.mock_pipeline.name,
-                                "lifecycle_state": "ACCEPTED",
-                                "lifecycle_details": "Test Lifecycle details.",
-                                "time_started": cls.mock_datetime,
-                                "time_finished": cls.mock_datetime,
-                            }
-                        )
+                cls.mock_pipeline_run = PipelineRun(
+                    **{
+                        "display_name": cls.mock_pipeline.name,
+                        "lifecycle_state": "ACCEPTED",
+                        "lifecycle_details": "Test Lifecycle details.",
+                        "time_started": cls.mock_datetime,
+                        "time_finished": cls.mock_datetime,
+                    }
+                )
 
                 cls.mock_pipeline_run.step_runs = [
                     MagicMock(

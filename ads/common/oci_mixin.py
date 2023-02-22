@@ -744,12 +744,24 @@ class OCIModelMixin(OCISerializableMixin):
         return self
 
     def __getattribute__(self, name: str):
+        """Returns an attribute value of the resource.
+
+        This method will try to sync the values from OCI service when it is not already available locally.
+        Some attribute value may not be available locally if the previous OCI API call returns an OCI model
+        that contains only a subset of the attributes.
+        For example, JobSummary model contains only a subset of the attributes from the Job model.
+
+        Parameters
+        ----------
+        name : str
+            Attribute name.
+        """
         skip_lookup = ["id", "attribute_map", "_oci_attributes"]
 
         if name in skip_lookup or name.startswith("_"):
             return super().__getattribute__(name)
 
-        # Ignore if _oci_attributes is not intialized
+        # Ignore if _oci_attributes is not initialized
         if not hasattr(self, "_oci_attributes"):
             return super().__getattribute__(name)
 
@@ -768,9 +780,23 @@ class OCIModelMixin(OCISerializableMixin):
             if not super().__getattribute__(name):
                 try:
                     self.sync(merge_strategy=MergeStrategy.MERGE)
+                except oci.exceptions.ServiceError as ex:
+                    # 400 errors are usually cause by the user
+                    if ex.status == 400:
+                        logger.error("%s - %s: %s", self.__class__, ex.code, ex.message)
+                        self._oci_attributes = self.attribute_map
+                    else:
+                        logger.error(
+                            "Failed to synchronize the properties of %s due to service error:\n%s",
+                            self.__class__,
+                            str(ex),
+                        )
                 except Exception as ex:
                     logger.error(
-                        "Failed to synchronize the properties of %s: %s", self, str(ex)
+                        "Failed to synchronize the properties of %s: %s\n%s",
+                        self.__class__,
+                        type(ex),
+                        str(ex),
                     )
         return super().__getattribute__(name)
 

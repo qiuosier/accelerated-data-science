@@ -691,7 +691,41 @@ class DataScienceJobRun(
         str
             YAML stored in a string.
         """
-        return yaml.safe_dump(self.to_dict())
+        # Here the job YAML is used as the base for the job run
+        job_dict = self.job.to_dict()
+
+        # Update infrastructure from job run
+        run_dict = self.to_dict()
+        infra_specs = [
+            run_dict,
+            run_dict.get("jobInfrastructureConfigurationDetails", {}),
+            run_dict.get("logDetails", {}),
+        ]
+        for infra_spec in infra_specs:
+            for key in infra_spec:
+                if key in job_dict["spec"]["infrastructure"]["spec"]:
+                    job_dict["spec"]["infrastructure"]["spec"][key] = infra_spec[key]
+
+        # Update runtime from job run
+        from ads.jobs import Job
+
+        job = Job.from_dict(job_dict)
+        envs = job.runtime.envs
+        run_config_override = run_dict.get("jobConfigurationOverrideDetails", {})
+        envs.update(run_config_override.get("environmentVariables", {}))
+        job.runtime.with_environment_variable(**envs)
+        if run_config_override.get("commandLineArguments"):
+            job.runtime.set_spec(
+                "args",
+                run_config_override.get("commandLineArguments"),
+            )
+
+        # Update kind, id and name
+        run_dict = job.to_dict()
+        run_dict["kind"] = "jobRun"
+        run_dict["spec"]["id"] = self.id
+        run_dict["spec"]["name"] = self.display_name
+        return yaml.safe_dump(run_dict)
 
     @property
     def job(self):
@@ -1114,12 +1148,12 @@ class DataScienceJob(Infrastructure):
         if self.log_id and not self.log_group_id:
             try:
                 log_obj = OCILog.from_ocid(self.log_id)
-            except ResourceNotFoundError:
+            except ResourceNotFoundError as ex:
                 raise ResourceNotFoundError(
                     f"Unable to determine log group ID for Log ({self.log_id})."
                     " The log resource may not exist or You may not have the required permission."
                     " Try to avoid this by specifying the log group ID."
-                )
+                ) from ex
             self.with_log_group_id(log_obj.log_group_id)
 
         if self.log_group_id and not self.log_id:

@@ -30,17 +30,6 @@ random_seed = 42
 
 
 class TestDSCJob:
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "<region>",
-    }
-
     def setup_method(self):
         self.payload = dict(
             compartment_id="test_compartment_id",
@@ -127,11 +116,7 @@ class TestDSCJob:
         )
         return mock_client
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_delete(
-        self, mock_load_key_file, mock_config_from_file, mock_details, mock_client
-    ):
+    def test_create_delete(self, mock_details, mock_client):
         job = DSCJob(**self.payload)
         with patch.object(DSCJob, "client", mock_client):
             with patch.object(OCIModelMixin, "to_oci_model", mock_details):
@@ -142,12 +127,8 @@ class TestDSCJob:
                 )
                 assert job.display_name == self.payload["display_name"]
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_create_job_with_default_display_name(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_details_with_default_display_name,
         mock_client_with_default_display_name,
     ):
@@ -164,12 +145,8 @@ class TestDSCJob:
                     job.display_name[:-9] == utils.get_random_name_for_resource()[:-9]
                 )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_create_job_with_default_display_name_with_artifact(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_details_with_default_display_name_with_artifact,
         mock_client_with_default_display_name_with_artifact,
     ):
@@ -260,12 +237,8 @@ class TestDSCJob:
             ),
         ],
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test__load_infra_from_notebook(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         test_config_details,
         expected_result,
     ):

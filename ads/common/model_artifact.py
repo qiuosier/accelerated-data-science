@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2020, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 import warnings
@@ -274,10 +274,12 @@ class ModelArtifact(Introspectable):
         else:
             repository_url = "file://" + repo.working_dir  # no remote repo
 
-        # get git branch
-        git_branch = format(repo.active_branch)
-        # get git commit
+        git_branch = None
+        git_commit = None
         try:
+            # get git branch
+            git_branch = format(repo.active_branch)
+            # get git commit
             git_commit = format(str(repo.head.commit.hexsha))
             training_code_info.GIT_COMMIT = git_commit
         except ValueError:

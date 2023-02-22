@@ -230,9 +230,7 @@ class TestConfigResolver:
             and r.config["execution"]["conda_type"] == "service"
         )
 
-    import mock
-    @mock.patch("OCIClientFactory.get_tenancy")
-    def test_resolve_image_name(self, mock_get_tenancy):
+    def test_resolve_image_name(self):
         config = {
             "execution": {
                 "operator_name": "hello-world",

@@ -73,17 +73,6 @@ ML_JOB_STEP_RUN_NO_ID_PAYLOAD = {
 
 
 class TestPipelineRun:
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "<region>",
-    }
-
     def setup_method(self):
         self.pipeline_run_details = {
             "project_id": "test project id",
@@ -158,11 +147,7 @@ class TestPipelineRun:
             )
 
     @patch.object(oci.data_science.DataScienceClient, "create_pipeline_run")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create(
-        self, mock_load_key_file, mock_config_from_file, mock_create_pipeline_run
-    ):
+    def test_create(self, mock_create_pipeline_run):
         pipeline_run = PipelineRun()
         expected_result = pipeline_run.to_oci_model(
             oci.data_science.models.CreatePipelineRunDetails
@@ -182,11 +167,7 @@ class TestPipelineRun:
             )
 
     @patch.object(oci.data_science.DataScienceClient, "cancel_pipeline_run")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_cancel(
-        self, mock_load_key_file, mock_config_from_file, mock_cancel_pipeline_run
-    ):
+    def test_cancel(self, mock_cancel_pipeline_run):
         pipeline_run = PipelineRun()
         pipeline_run.id = PIPELINE_RUN_OCID
         pipeline_run.lifecycle_state = PipelineRun.LIFECYCLE_STATE_CANCELED
@@ -200,12 +181,8 @@ class TestPipelineRun:
         oci.data_science.DataScienceClientCompositeOperations,
         "delete_pipeline_run_and_wait_for_state",
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_delete(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_delete_pipeline_run_and_wait_for_state,
         mock_sync,
     ):
@@ -363,11 +340,7 @@ class TestPipelineRun:
         )
         assert actual_step_details[1].runtime.type == "notebook"
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_set_service_logging_resource(
-        self, mock_load_key_file, mock_config_from_file
-    ):
+    def test_set_service_logging_resource(self):
         pipeline_run = PipelineRun()
         service_logging = OCILog()
         pipeline_run._set_service_logging_resource(service_logging)
@@ -387,11 +360,7 @@ class TestPipelineRun:
 
     @patch.object(PipelineRun, "sync", return_value=None)
     @patch.object(ConsolidatedLog, "stream", return_value=1)
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_stream_log(
-        self, mock_load_key_file, mock_config_from_file, mock_stream, mock_sync
-    ):
+    def test_stream_log(self, mock_stream, mock_sync):
         pipeline_run = PipelineRun()
         pipeline_run.id = PIPELINE_RUN_OCID
         pipeline_run.log_details = oci.data_science.models.PipelineRunLogDetails()
@@ -434,9 +403,7 @@ class TestPipelineRun:
             log_filter=f"(source = '*{PIPELINE_RUN_OCID}' AND (subject = '{custom_script_step.step_name}' OR subject = '{ml_job_step.step_name}')) OR source = '*{ml_job_step.job_run_id}'",
         )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_to_yaml(self, mock_load_key_file, mock_config_from_file):
+    def test_to_yaml(self):
         create_pipeline_run_details = {
             "compartmentId": "TestCompartmentId",
             "displayName": "TestPipeline",
@@ -728,11 +695,7 @@ stepOverrideDetails:
 
     @patch.object(PipelineRun, "_PipelineRun__stream_log")
     @patch.object(PipelineRun, "logs")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_watch_service_log(
-        self, mock_load_key_file, mock_config_from_file, mock_logs, mock_stream_log
-    ):
+    def test_watch_service_log(self, mock_logs, mock_stream_log):
         pipeline_run = PipelineRun()
         mock_logs.return_value = ConsolidatedLog(OCILog(log_type="SERVICE"))
 
@@ -742,11 +705,7 @@ stepOverrideDetails:
 
     @patch.object(PipelineRun, "_PipelineRun__stream_log")
     @patch.object(PipelineRun, "logs")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_watch_custom_log(
-        self, mock_load_key_file, mock_config_from_file, mock_logs, mock_stream_log
-    ):
+    def test_watch_custom_log(self, mock_logs, mock_stream_log):
         pipeline_run = PipelineRun()
         pipeline_run.id = PIPELINE_RUN_OCID
         mock_logs.return_value = ConsolidatedLog(OCILog(log_type="CUSTOM"))
@@ -757,11 +716,7 @@ stepOverrideDetails:
 
     @patch.object(PipelineRun, "_PipelineRun__stream_log")
     @patch.object(PipelineRun, "logs")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_watch_both_log(
-        self, mock_load_key_file, mock_config_from_file, mock_logs, mock_stream_log
-    ):
+    def test_watch_both_log(self, mock_logs, mock_stream_log):
         pipeline_run = PipelineRun()
         pipeline_run.id = PIPELINE_RUN_OCID
         mock_logs.return_value = ConsolidatedLog(

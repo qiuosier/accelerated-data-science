@@ -8,7 +8,6 @@ import copy
 import os
 import random
 import tempfile
-import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 import oci
@@ -24,6 +23,7 @@ from ads.jobs.builders.infrastructure.dataflow import (
     DataFlowRun,
     _Log,
     logger,
+    _env_variables_to_dataflow_config,
 )
 from ads.jobs.builders.runtimes.python_runtime import (
     DataFlowRuntime,
@@ -45,19 +45,9 @@ SAMPLE_PAYLOAD = dict(
     spark_version="3.2.1",
     language="PYTHON",
     logs_bucket_uri="oci://test_bucket@test_namespace/",
+    private_endpoint_id="test_private_endpoint",
 )
 random_seed = 42
-
-# Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-# "tenancy", "user", "fingerprint" must fit the ocid pattern.
-# Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-test_config = {
-    "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-    "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-    "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-    "key_file": "<path>/<to>/<key_file>",
-    "region": "<region>",
-}
 
 
 class TestDataFlowApp:
@@ -68,6 +58,10 @@ class TestDataFlowApp:
             "lifecycle_state"
         ] = oci.data_flow.models.Application.LIFECYCLE_STATE_ACTIVE
         payload["id"] = "ocid1.datasciencejob.oc1.iad.<unique_ocid>"
+        payload["configuration"] = {
+            "spark.driverEnv.env1": "test1",
+            "spark.executorEnv.env1": "test1",
+        }
         return Response(
             data=Application(**payload), status=None, headers=None, request=None
         )
@@ -115,11 +109,7 @@ class TestDataFlowApp:
         )
         return mock_client
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_delete(
-        self, mock_load_key_file, mock_config_from_file, mock_to_dict, mock_client
-    ):
+    def test_create_delete(self, mock_to_dict, mock_client):
         df = DataFlowApp(**SAMPLE_PAYLOAD)
         with patch.object(DataFlowApp, "client", mock_client):
             with patch.object(DataFlowApp, "to_dict", mock_to_dict):
@@ -133,7 +123,7 @@ class TestDataFlowApp:
                     df.lifecycle_state
                     == oci.data_flow.models.Application.LIFECYCLE_STATE_DELETED
                 )
-                assert len(df.to_yaml()) == 408
+                assert len(df.to_yaml()) == 451
 
     def test_create_df_app_with_default_display_name(
         self,
@@ -208,12 +198,8 @@ class TestDataFlowRun:
         )
         return mock_client
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_create_run_delete(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_run_to_dict,
         mock_run_client,
     ):
@@ -237,12 +223,8 @@ class TestDataFlowRun:
                     == oci.data_flow.models.Run.LIFECYCLE_STATE_CANCELING
                 )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_create_run_with_default_display_name(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_run_to_dict_with_default_display_name,
         mock_run_client_with_default_display_name,
     ):
@@ -327,6 +309,8 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
                 SAMPLE_PAYLOAD["logs_bucket_uri"]
             ).with_num_executors(
                 2
+            ).with_private_endpoint_id(
+                "test_private_endpoint"
             )
         return df
 
@@ -342,6 +326,7 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
             .with_custom_conda(
                 "oci://allens_packs@ociodscdev/conda_environments/cpu/PySpark 3.0 and Data Flow/5.0/pyspark30_p37_cpu_v5"
             )
+            .with_environment_variable(env1="test1")
         )
 
         with patch.object(DataFlowApp, "client", mock_client):
@@ -351,6 +336,8 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
                     df.id == df.job_id == "ocid1.datasciencejob.oc1.iad.<unique_ocid>"
                 )
                 df.name = "test"
+                assert df.df_app.configuration["spark.driverEnv.env1"] == "test1"
+                assert df.df_app.configuration["spark.executorEnv.env1"] == "test1"
                 assert df.df_app.display_name == "test"
 
     def test_create_with_default_display_name(
@@ -410,6 +397,8 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
         assert df.name == "test-df"
         assert df.driver_shape == "VM.Standard2.1"
         assert df.executor_shape == "VM.Standard2.1"
+        assert df.private_endpoint_id == "test_private_endpoint"
+
         assert (
             df.runtime.script_uri
             == "oci://test_bucket@test_namespace/test-dataflow/test-dataflow.py"
@@ -429,6 +418,7 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
         assert df_dict["spec"]["numExecutors"] == 2
         assert df_dict["spec"]["driverShape"] == "VM.Standard2.1"
         assert df_dict["spec"]["logsBucketUri"] == "oci://test_bucket@test_namespace/"
+        assert df_dict["spec"]["privateEndpointId"] == "test_private_endpoint"
 
         df_dict["spec"].pop("language")
         df_dict["spec"].pop("numExecutors")
@@ -457,9 +447,7 @@ class TestDataFlowNotebookRuntime:
                 .with_notebook(
                     os.path.join(
                         curr_folder,
-                        "../../..",
-                        "integration",
-                        "fixtures",
+                        "test_files",
                         "exclude_check.ipynb",
                     )
                 )
@@ -472,3 +460,19 @@ class TestDataFlowNotebookRuntime:
                 content = f.read()
             assert 'print("ignore")' not in content
             assert 'c = 4\n"ignore"' not in content
+
+
+class TestDataFlowCommonUtils:
+    @pytest.mark.parametrize(
+        "test_data, expected_result",
+        [
+            (
+                {"env1": "value1"},
+                {"spark.executorEnv.env1": "value1", "spark.driverEnv.env1": "value1"},
+            ),
+            ({}, {}),
+            (None, {}),
+        ],
+    )
+    def test__env_variables_to_dataflow_config(self, test_data, expected_result):
+        assert _env_variables_to_dataflow_config(test_data) == expected_result

@@ -44,6 +44,35 @@ def conda_pack_name_to_dataflow_config(conda_uri):
     }
 
 
+def _env_variables_to_dataflow_config(
+    env_vars: Dict[str, str] = None
+) -> Dict[str, str]:
+    """Prepares environment variables for the application.
+    Similar environment variables will be setup for the driver and executor.
+
+    Parameters
+    ----------
+    env_vars: (Dict[str, str], optional). Defaults to `None`
+        The dictionary with SRC env variables.
+        Example: {"env1": "value1"}
+
+    Returns
+    -------
+    Dict[str, str]
+        Dictionary with pre populated environment variables.
+        Example: {"spark.executorEnv.env1": "value1", "spark.driverEnv.env1": "value1"}
+    """
+    if not env_vars:
+        return {}
+
+    result = {}
+    for level in ("spark.executorEnv", "spark.driverEnv"):
+        for env_name, env_value in env_vars.items():
+            result[f"{level}.{env_name}"] = env_value
+
+    return result
+
+
 class DataFlowApp(OCIModelMixin, oci.data_flow.models.Application):
     @classmethod
     def init_client(cls, **kwargs) -> oci.data_flow.data_flow_client.DataFlowClient:
@@ -352,6 +381,7 @@ class DataFlow(Infrastructure):
     CONST_MEMORY_IN_GBS = "memory_in_gbs"
     CONST_OCPUS = "ocpus"
     CONST_ID = "id"
+    CONST_PRIVATE_ENDPOINT_ID = "private_endpoint_id"
 
     attribute_map = {
         CONST_COMPARTMENT_ID: "compartmentId",
@@ -369,6 +399,7 @@ class DataFlow(Infrastructure):
         CONST_MEMORY_IN_GBS: "memoryInGBs",
         CONST_OCPUS: CONST_OCPUS,
         CONST_ID: CONST_ID,
+        CONST_PRIVATE_ENDPOINT_ID: "privateEndpointId",
     }
 
     def __init__(self, spec: dict = None, **kwargs):
@@ -384,7 +415,8 @@ class DataFlow(Infrastructure):
                 if f"with_{camel_to_snake(k)}" in self.__dir__() and v is not None
             }
             defaults.update(spec)
-            super(DataFlow, self).__init__(defaults, **kwargs)
+            super().__init__(defaults, **kwargs)
+
         self.df_app = DataFlowApp(**self._spec)
         self.runtime = None
         self._name = None
@@ -722,6 +754,22 @@ class DataFlow(Infrastructure):
             },
         )
 
+    def with_private_endpoint_id(self, private_endpoint_id: str) -> "DataFlow":
+        """
+        Set the private endpoint ID for a Data Flow job infrastructure.
+
+        Parameters
+        ----------
+        private_endpoint_id: str
+            The OCID of a private endpoint.
+
+        Returns
+        -------
+        DataFlow
+            the Data Flow instance itself
+        """
+        return self.set_spec(self.CONST_PRIVATE_ENDPOINT_ID, private_endpoint_id)
+
     def __getattr__(self, item):
         if f"with_{item}" in self.__dir__():
             return self.get_spec(item)
@@ -790,6 +838,14 @@ class DataFlow(Infrastructure):
             runtime_config = runtime.configuration or dict()
             runtime_config.update(conda_pack_name_to_dataflow_config(conda_uri))
             runtime.with_configuration(runtime_config)
+
+        # propagate environment variables
+        runtime_config = runtime.configuration or dict()
+        runtime_config.update(
+            _env_variables_to_dataflow_config(runtime.environment_variables)
+        )
+        runtime.with_configuration(runtime_config)
+
         payload.update(
             {
                 "display_name": self.name,

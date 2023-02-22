@@ -85,17 +85,6 @@ ARTIFACT_HEADER_INFO = {
 
 
 class TestOCIDataScienceModel:
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "test_region",
-    }
-
     def setup_class(cls):
 
         # Mock delete model response
@@ -149,9 +138,7 @@ class TestOCIDataScienceModel:
         )
 
     def setup_method(self):
-        with patch("oci.config.from_file", return_value=self.test_config):
-            with patch("oci.signer.load_private_key_from_file"):
-                self.mock_model = OCIDataScienceModel(**OCI_MODEL_PAYLOAD)
+        self.mock_model = OCIDataScienceModel(**OCI_MODEL_PAYLOAD)
 
     @pytest.fixture(scope="class")
     def mock_client(self):
@@ -188,9 +175,7 @@ class TestOCIDataScienceModel:
         )
         return mock_client
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_fail(self, mock_load_key_file, mock_config_from_file):
+    def test_create_fail(self):
         """Ensures creating model fails in case of wrong input params."""
         with pytest.raises(
             ValueError,
@@ -203,11 +188,7 @@ class TestOCIDataScienceModel:
         ):
             OCIDataScienceModel(compartment_id="test").create()
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_create_success(self, mock_client):
         """Ensures creating model passes in case of valid input params."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             with patch.object(OCIDataScienceModel, "to_oci_model") as mock_to_oci_model:
@@ -221,9 +202,7 @@ class TestOCIDataScienceModel:
                     mock_client.create_model.assert_called_with(mock_oci_model)
                     assert result == self.mock_model
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_update(self, mock_load_key_file, mock_config_from_file, mock_client):
+    def test_update(self, mock_client):
         """Tests updating datascience Model."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             with patch.object(OCIDataScienceModel, "to_oci_model") as mock_to_oci_model:
@@ -239,11 +218,7 @@ class TestOCIDataScienceModel:
                     )
                     assert result == self.mock_model
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_delete_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_delete_success(self, mock_client):
         """Ensures model can be deleted."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             with patch.object(
@@ -259,9 +234,7 @@ class TestOCIDataScienceModel:
                         mock_client.delete_model.assert_called_with(self.mock_model.id)
                         mock_sync.assert_called()
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_delete_fail(self, mock_load_key_file, mock_config_from_file, mock_client):
+    def test_delete_fail(self, mock_client):
         """Ensures deleting model fails in case if there are active model deployments."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             with patch.object(
@@ -274,18 +247,12 @@ class TestOCIDataScienceModel:
                     self.mock_model.delete(delete_associated_model_deployment=False)
 
     @patch.object(OCIModelMixin, "from_ocid")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_from_id(self, mock_load_key_file, mock_config_from_file, mock_from_ocid):
+    def test_from_id(self, mock_from_ocid):
         """Tests getting a model by OCID."""
         OCIDataScienceModel.from_id(MODEL_OCID)
         mock_from_ocid.assert_called_with(MODEL_OCID)
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_model_provenance(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_create_model_provenance(self, mock_client):
         """Tests creating model provenance metadata."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             test_result = self.mock_model.create_model_provenance(
@@ -296,11 +263,7 @@ class TestOCIDataScienceModel:
             )
             assert test_result == self.mock_model_provenance
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_update_model_provenance(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_update_model_provenance(self, mock_client):
         """Test updating model provenance metadata."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             test_result = self.mock_model.update_model_provenance(
@@ -311,11 +274,7 @@ class TestOCIDataScienceModel:
             )
             assert test_result == self.mock_model_provenance
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_get_model_provenance_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_get_model_provenance_success(self, mock_client):
         """Tests getting model provenance metadata."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             test_result = self.mock_model.get_model_provenance()
@@ -323,11 +282,7 @@ class TestOCIDataScienceModel:
             assert test_result == self.mock_model_provenance
 
     @patch.object(OCIDataScienceModel, "client")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_get_model_provenance_fail(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_get_model_provenance_fail(self, mock_client):
         """Tests getting model provenance metadata."""
         mock_client.get_model_provenance = MagicMock(
             side_effect=ServiceError(
@@ -338,11 +293,7 @@ class TestOCIDataScienceModel:
             self.mock_model.get_model_provenance()
             mock_client.get_model_provenance.assert_called_with(MODEL_OCID)
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_get_artifact_info_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_get_artifact_info_success(self, mock_client):
         """Tests getting model artifact attachment information."""
         mock_client.head_model_artifact = MagicMock(
             return_value=Response(
@@ -357,11 +308,7 @@ class TestOCIDataScienceModel:
             assert test_result == ARTIFACT_HEADER_INFO
 
     @patch.object(OCIDataScienceModel, "client")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_get_artifact_info_fail(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_get_artifact_info_fail(self, mock_client):
         """Tests getting model artifact attachment information."""
         mock_client.head_model_artifact = MagicMock(
             side_effect=ServiceError(
@@ -372,11 +319,7 @@ class TestOCIDataScienceModel:
             self.mock_model.get_artifact_info()
             mock_client.head_model_artifact.assert_called_with(MODEL_OCID)
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_get_model_artifact_content_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_get_model_artifact_content_success(self, mock_client):
         """Tests getting model artifact content."""
         with patch.object(OCIDataScienceModel, "client", mock_client):
             test_result = self.mock_model.get_model_artifact_content()
@@ -386,11 +329,7 @@ class TestOCIDataScienceModel:
             assert test_result == b"test"
 
     @patch.object(OCIDataScienceModel, "client")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_get_model_artifact_content_fail(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_get_model_artifact_content_fail(self, mock_client):
         """Tests getting model artifact content."""
         mock_client.get_model_artifact_content = MagicMock(
             side_effect=ServiceError(
@@ -402,11 +341,7 @@ class TestOCIDataScienceModel:
             mock_client.get_model_artifact_content.assert_called_with(MODEL_OCID)
 
     @patch.object(OCIDataScienceModel, "client")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_model_artifact(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_create_model_artifact(self, mock_client):
         """Tests creating model artifact for specified model."""
         mock_client.create_model_artifact = MagicMock()
         test_data = b"test"
@@ -418,11 +353,7 @@ class TestOCIDataScienceModel:
         )
 
     @patch.object(OCIResource, "search")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_model_deployment(
-        self, mock_load_key_file, mock_config_from_file, mock_search
-    ):
+    def test_model_deployment(self, mock_search):
         """Tests getting the list of model deployments by model ID across the compartments."""
         self.mock_model.model_deployment(
             config={"key": "value"},
@@ -442,12 +373,8 @@ class TestOCIDataScienceModel:
         )
 
     @patch.object(OCIDataScienceModel, "_wait_for_work_request")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_import_model_artifact_success(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_wait_for_work_request,
         mock_client,
     ):
@@ -476,11 +403,7 @@ class TestOCIDataScienceModel:
             )
 
     @patch.object(OCIDataScienceModel, "client")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_import_model_artifact_fail(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_import_model_artifact_fail(self, mock_client):
         """Tests importing model artifact content from the model catalog."""
         test_bucket_uri = "oci://bucket@namespace/prefix"
         mock_client.import_model_artifact = MagicMock(
@@ -494,12 +417,8 @@ class TestOCIDataScienceModel:
             )
 
     @patch.object(OCIDataScienceModel, "_wait_for_work_request")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_export_model_artifact(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_wait_for_work_request,
         mock_client,
     ):

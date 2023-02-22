@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*--
+
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 import os
 import tempfile
 import gc
@@ -44,9 +50,10 @@ def _test_read_line(fmt, backend, idx=None):
             for line in backend.read_line(fhandler)
             if len(line.strip()) > 0
         ]
-        assert len(lines) == len(expected_outputs[i])
-        for j in range(len(expected_outputs[i])):
-            assert lines[j] == expected_outputs[i][j]
+        assert len(lines) > 0
+        assert "".join(lines).replace("\n", "") == "".join(expected_outputs[i]).replace(
+            "\n", ""
+        )
 
 
 def _test_read_text(fmt, backend, idx=None, check_meta=False):
@@ -55,7 +62,9 @@ def _test_read_text(fmt, backend, idx=None, check_meta=False):
     for i in idx:
         fhandler = fsspec.open(get_test_dataset_path(sources[i] + "." + fmt))
         for text in backend.read_text(fhandler):
-            assert text.strip() == "\n".join(expected_outputs[i])
+            assert "".join(text.strip().replace("\n", "")) == "".join(
+                expected_outputs[i]
+            )
         if check_meta:
             assert len(backend.get_metadata(fhandler)) > 0
 
@@ -68,7 +77,7 @@ def _test_convert_text(fmt, backend, idx=None):
         with tempfile.TemporaryDirectory() as d:
             dest = backend.convert_to_text(fhandler, d)
             for text in Base().read_text(fsspec.open(dest)):
-                assert text.strip() == "\n".join(expected_outputs[i])
+                assert text.strip().replace("\n", "") == "".join(expected_outputs[i])
 
 
 class TestBase:

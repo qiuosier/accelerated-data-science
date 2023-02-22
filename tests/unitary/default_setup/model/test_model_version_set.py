@@ -39,17 +39,6 @@ MVS_OCID = "ocid.xxx.datasciencemodelversionset.<unique_ocid>"
 
 
 class TestDataScienceModelVersionSet:
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "test_region",
-    }
-
     def setup_class(cls):
 
         cls.mock_date = datetime.datetime(2022, 7, 1)
@@ -77,9 +66,7 @@ class TestDataScienceModelVersionSet:
         )
         return mock_client
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_fail(self, mock_load_key_file, mock_config_from_file):
+    def test_create_fail(self):
         """Ensures creating model version set fails in case of wrong input params."""
         with pytest.raises(
             ValueError,
@@ -96,11 +83,7 @@ class TestDataScienceModelVersionSet:
     def mock_to_dict(self):
         return MagicMock(return_value=MVS_PAYLOAD)
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client, mock_to_dict
-    ):
+    def test_create_success(self, mock_client, mock_to_dict):
         """Ensures creating model version set passes in case of valid input params."""
 
         datetime_mock = Mock(wraps=datetime.datetime)
@@ -120,11 +103,7 @@ class TestDataScienceModelVersionSet:
                         == OCIModelVersionSet.LIFECYCLE_STATE_ACTIVE
                     )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_delete_success(
-        self, mock_load_key_file, mock_config_from_file, mock_client
-    ):
+    def test_delete_success(self, mock_client):
         """Ensures model version set can be deleted."""
         dmvs = DataScienceModelVersionSet(**MVS_PAYLOAD)
         with patch.object(DataScienceModelVersionSet, "client", mock_client):
@@ -174,17 +153,6 @@ class TestDataScienceModelVersionSet:
 
 
 class TestModelVersionSet:
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "test_region",
-    }
-
     def setup_class(cls):
         cls.mock_date = datetime.datetime(2022, 7, 1)
 
@@ -203,11 +171,7 @@ class TestModelVersionSet:
         }
 
     @patch.object(ModelVersionSet, "_load_default_properties")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test__init(
-        self, mock_load_key_file, mock_config_from_file, mock_load_default_properties
-    ):
+    def test__init(self, mock_load_default_properties):
         mock_load_default_properties.return_value = self.mock_default_properties
         mvs = ModelVersionSet()
         assert mvs.to_dict()["spec"] == batch_convert_case(
@@ -215,30 +179,18 @@ class TestModelVersionSet:
         )
 
     @patch.object(ModelVersionSet, "_load_default_properties")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test__init_with_spec(
-        self, mock_load_key_file, mock_config_from_file, mock_load_default_properties
-    ):
+    def test__init_with_spec(self, mock_load_default_properties):
         mock_load_default_properties.return_value = self.mock_default_properties
         mvs = ModelVersionSet(spec=self.payload)
         assert mvs.to_dict()["spec"] == batch_convert_case(self.payload, to_fmt="camel")
 
     @patch.object(ModelVersionSet, "_load_default_properties")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test__init_with_kwargs(
-        self, mock_load_key_file, mock_config_from_file, mock_load_default_properties
-    ):
+    def test__init_with_kwargs(self, mock_load_default_properties):
         mock_load_default_properties.return_value = self.mock_default_properties
         mvs = ModelVersionSet(**self.payload)
         assert mvs.to_dict()["spec"] == batch_convert_case(self.payload, to_fmt="camel")
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_create_with_builder_pattern(
-        self, mock_load_key_file, mock_config_from_file
-    ):
+    def test_create_with_builder_pattern(self):
         mvs = (
             ModelVersionSet()
             .with_compartment_id(self.payload["compartment_id"])
@@ -252,9 +204,7 @@ class TestModelVersionSet:
         assert mvs.to_dict()["spec"] == batch_convert_case(self.payload, to_fmt="camel")
 
     @patch.object(DataScienceModelVersionSet, "update")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_update(self, mock_load_key_file, mock_config_from_file, mock_update):
+    def test_update(self, mock_update):
         test_dmvs = DataScienceModelVersionSet(**self.mock_default_properties)
         mock_update.return_value = test_dmvs
         mvs = ModelVersionSet()
@@ -265,18 +215,14 @@ class TestModelVersionSet:
         )
 
     @patch.object(DataScienceModelVersionSet, "delete")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_delete(self, mock_load_key_file, mock_config_from_file, mock_delete):
+    def test_delete(self, mock_delete):
         mvs = ModelVersionSet()
         mvs.delete()
         mock_delete.assert_called_with(False)
         mvs.delete(delete_model=True)
         mock_delete.assert_called_with(True)
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_model_add(self, mock_load_key_file, mock_config_from_file):
+    def test_model_add(self):
         mvs = ModelVersionSet()
         with pytest.raises(
             ModelVersionSetNotSaved, match="Model version set needs to be saved."
@@ -326,9 +272,7 @@ class TestModelVersionSet:
         new_callable=PropertyMock,
         return_value=OCIModelVersionSet.LIFECYCLE_STATE_ACTIVE,
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_status(self, mock_load_key_file, mock_config_from_file, mock_status):
+    def test_status(self, mock_status):
 
         mvs = ModelVersionSet()
         assert mvs.status == OCIModelVersionSet.LIFECYCLE_STATE_ACTIVE
@@ -338,9 +282,7 @@ class TestModelVersionSet:
         "ads.model.model_version_set.OCI_REGION_METADATA",
         '{"regionIdentifier": "test_region_1"}',
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_details_link(self, mock_load_key_file, mock_config_from_file):
+    def test_details_link(self):
         mvs = ModelVersionSet()
         mvs.dsc_model_version_set.id = MVS_OCID
         with patch.object(
@@ -363,9 +305,7 @@ class TestModelVersionSet:
                 region="test_region_1", id=MVS_OCID
             )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_list(self, mock_load_key_file, mock_config_from_file):
+    def test_list(self):
 
         dmvs_list = [
             DataScienceModelVersionSet(**self.mock_default_properties),
@@ -386,9 +326,7 @@ class TestModelVersionSet:
             mock_list_resource.assert_called_with("test_compartment_id")
 
     @patch.object(DataScienceModel, "list")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_models(self, mock_load_key_file, mock_config_from_file, mock_list_models):
+    def test_models(self, mock_list_models):
         mvs = ModelVersionSet(**self.mock_default_properties)
         with pytest.raises(
             ModelVersionSetNotSaved, match="Model version set needs to be saved."
@@ -411,20 +349,14 @@ class TestModelVersionSet:
                 model_version_set_name=self.mock_default_properties["name"],
             )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_from_dsc_model_version_set(
-        self, mock_load_key_file, mock_config_from_file
-    ):
+    def test_from_dsc_model_version_set(self):
         dmvs = DataScienceModelVersionSet(**self.mock_default_properties)
         mvs = ModelVersionSet.from_dsc_model_version_set(dmvs)
         assert mvs.to_dict()["spec"] == batch_convert_case(
             self.mock_default_properties, to_fmt="camel"
         )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_from_id(self, mock_load_key_file, mock_config_from_file):
+    def test_from_id(self):
         dmvs = DataScienceModelVersionSet(**self.mock_default_properties)
         with patch.object(DataScienceModelVersionSet, "from_ocid", return_value=dmvs):
             mvs = ModelVersionSet.from_id(MVS_OCID)
@@ -440,9 +372,7 @@ class TestModelVersionSet:
     @patch(
         "ads.model.model_version_set.COMPARTMENT_OCID", MVS_PAYLOAD["compartment_id"]
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_from_name(self, mock_load_key_file, mock_config_from_file):
+    def test_from_name(self):
         dmvs = DataScienceModelVersionSet(**self.mock_default_properties)
         with patch.object(
             DataScienceModelVersionSet, "from_name", return_value=dmvs
@@ -472,11 +402,7 @@ class TestModelVersionSet:
                         name="from_name", compartment_id="test_compartment_id"
                     )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_model_version_set_context_lib_create_if_not_exist(
-        self, mock_load_key_file, mock_config_from_file
-    ):
+    def test_model_version_set_context_lib_create_if_not_exist(self):
         mvs = ModelVersionSet(**self.mock_default_properties)
         mvs.dsc_model_version_set.id = MVS_OCID
         with patch.object(
@@ -502,11 +428,7 @@ class TestModelVersionSet:
         assert _MVS_NAME_ENV_VAR not in os.environ
         assert _MVS_COMPARTMENT_ENV_VAR not in os.environ
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_model_version_set_context_lib_success(
-        self, mock_load_key_file, mock_config_from_file
-    ):
+    def test_model_version_set_context_lib_success(self):
         mvs = ModelVersionSet(**self.mock_default_properties)
         mvs.dsc_model_version_set.id = MVS_OCID
         with patch.object(

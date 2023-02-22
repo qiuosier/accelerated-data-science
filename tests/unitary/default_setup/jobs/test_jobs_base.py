@@ -49,17 +49,6 @@ class DataScienceJobPayloadTest(unittest.TestCase):
 
     SCRIPT_URI = "my_script.py"
 
-    # Current unit tests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "<region>",
-    }
-
     def setUp(self) -> None:
         self.maxDiff = None
         return super().setUp()
@@ -67,10 +56,6 @@ class DataScienceJobPayloadTest(unittest.TestCase):
     def mock_create_job(self, job):
         with mock.patch(
             "ads.jobs.builders.infrastructure.dsc_job.DSCJob._create_with_oci_api"
-        ), mock.patch(
-            "oci.config.from_file", return_value=self.test_config
-        ), mock.patch(
-            "oci.signer.load_private_key_from_file"
         ):
             return job.create()
 
@@ -178,7 +163,9 @@ class DriverRunTest(unittest.TestCase):
         "ads/jobs/templates", NotebookArtifact.CONST_DRIVER_SCRIPT
     )
 
-    def run_driver(self, driver_path, env_vars=None, args=None) -> list:
+    def run_driver(
+        self, driver_path, env_vars=None, args=None, suppress_error=False
+    ) -> list:
         """Runs the driver script
 
         Parameters
@@ -189,6 +176,11 @@ class DriverRunTest(unittest.TestCase):
             Environment variables for running the driver, by default None
         args : list, optional
             Command line arguments, by default None
+        suppress_error : bool
+            Whether to suppress the exception when there is an error running the driver.
+            When the is an error running the notebook:
+                If this is set to False, an exception will be raised and no output will be returned.
+                If this is set to True, no exception will be raised and the outputs will be returned.
 
         Returns
         -------
@@ -204,19 +196,24 @@ class DriverRunTest(unittest.TestCase):
             "--concurrency=multiprocessing",
             driver_path,
         ] + args
+        lines = []
         try:
             outputs = subprocess.check_output(
-                cmd,
-                env=env_vars,
+                cmd, env=env_vars, stderr=subprocess.STDOUT
             )
-            lines = outputs.decode().split("\n")
+            lines += outputs.decode().split("\n")
+        except subprocess.CalledProcessError as ex:
+            if ex.stdout:
+                lines += ex.stdout.decode().split("\n")
+            if ex.stderr:
+                lines += ex.stderr.decode().split("\n")
+            if not suppress_error:
+                self.fail(f"Error occurred when running {driver_path}")
+        finally:
             # print out log message for debugging purpose
             for line in lines:
                 print(line)
-        except subprocess.CalledProcessError as e:
-            print(e.output)
-            print(e.stderr)
-            self.fail(f"Error occurred when running {driver_path}")
+
         return lines
 
 

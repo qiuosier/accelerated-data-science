@@ -23,6 +23,7 @@ from ads.common import auth as authutil
 from ads.common import logger
 from ads.common.data_serializer import InputDataSerializer
 from ads.common.decorator.utils import class_or_instance_method
+from ads.evaluations import EvaluatorMixin
 from ads.model.transformer.onnx_transformer import ONNXTransformer
 from ads.model.model_introspect import (
     TEST_STATUS,
@@ -99,6 +100,13 @@ FRAMEWORKS_WITHOUT_ONNX_DATA_TRANSFORM = [
     Framework.SPARK,
 ]
 
+VERIFY_STATUS_NAME = "verify()"
+PREPARE_STATUS_NAME = "prepare()"
+INITIATE_STATUS_NAME = "initiate"
+SAVE_STATUS_NAME = "save()"
+DEPLOY_STATUS_NAME = "deploy()"
+PREDICT_STATUS_NAME = "predict()"
+
 
 class DataScienceModelType(str, metaclass=ExtendedEnumMeta):
     MODEL_DEPLOYMENT = "datasciencemodeldeployment"
@@ -151,7 +159,7 @@ def _prepare_artifact_dir(artifact_dir: str = None) -> str:
     return artifact_dir
 
 
-class GenericModel(MetadataMixin, Introspectable):
+class GenericModel(MetadataMixin, Introspectable, EvaluatorMixin):
     """Generic Model class which is the base class for all the frameworks including
     the unsupported frameworks.
 
@@ -646,6 +654,7 @@ class GenericModel(MetadataMixin, Introspectable):
             force_overwrite=force_overwrite,
             namespace=namespace,
             bucketname=DEFAULT_CONDA_BUCKET_NAME,
+            auth=self.auth,
         )
 
         self._summary_status.update_status(
@@ -2281,32 +2290,47 @@ class SummaryStatus:
 
     def __init__(self):
         summary_data = [
-            ["initiate", "Initiated the model", ModelState.DONE.value, ""],
-            ["prepare()", "Generated runtime.yaml", ModelState.AVAILABLE.value, ""],
-            ["prepare()", "Generated score.py", ModelState.AVAILABLE.value, ""],
-            ["prepare()", "Serialized model", ModelState.AVAILABLE.value, ""],
+            [INITIATE_STATUS_NAME, "Initiated the model", ModelState.DONE.value, ""],
             [
-                "prepare()",
+                PREPARE_STATUS_NAME,
+                "Generated runtime.yaml",
+                ModelState.AVAILABLE.value,
+                "",
+            ],
+            [PREPARE_STATUS_NAME, "Generated score.py", ModelState.AVAILABLE.value, ""],
+            [PREPARE_STATUS_NAME, "Serialized model", ModelState.AVAILABLE.value, ""],
+            [
+                PREPARE_STATUS_NAME,
                 "Populated metadata(Custom, Taxonomy and Provenance)",
                 ModelState.AVAILABLE.value,
                 "",
             ],
             [
-                "verify()",
+                VERIFY_STATUS_NAME,
                 "Local tested .predict from score.py",
                 ModelState.NOTAVAILABLE.value,
                 "",
             ],
-            ["save()", "Conducted Introspect Test", ModelState.NOTAVAILABLE.value, ""],
             [
-                "save()",
+                SAVE_STATUS_NAME,
+                "Conducted Introspect Test",
+                ModelState.NOTAVAILABLE.value,
+                "",
+            ],
+            [
+                SAVE_STATUS_NAME,
                 "Uploaded artifact to model catalog",
                 ModelState.NOTAVAILABLE.value,
                 "",
             ],
-            ["deploy()", "Deployed the model", ModelState.NOTAVAILABLE.value, ""],
             [
-                "predict()",
+                DEPLOY_STATUS_NAME,
+                "Deployed the model",
+                ModelState.NOTAVAILABLE.value,
+                "",
+            ],
+            [
+                PREDICT_STATUS_NAME,
                 "Called deployment predict endpoint",
                 ModelState.NOTAVAILABLE.value,
                 "",

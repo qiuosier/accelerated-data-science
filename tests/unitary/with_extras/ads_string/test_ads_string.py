@@ -72,6 +72,7 @@ class TestADSString:
 
     def test_spacy_method(self):
         from spacy.cli import download
+
         download("en_core_web_sm")
         ADSString.nlp_backend("spacy")
         assert SpacyParser in ADSString.plugins

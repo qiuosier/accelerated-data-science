@@ -28,6 +28,12 @@ from ads.feature_engineering.schema import (
 from sklearn.datasets import load_iris
 
 
+def get_test_dataset_path(file_name):
+    return os.path.join(
+        f"{os.path.dirname(os.path.abspath(__file__))}/../vor_datasets/", file_name
+    )
+
+
 @patch("ads.model.common.utils.fetch_manifest_from_conda_location")
 def get_model_artifact_instance(model_dir, mock_fetch_manifest_from_conda_location):
     manifest = {

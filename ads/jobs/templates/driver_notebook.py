@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 
 import nbformat
 import oci
-from nbconvert.preprocessors import ExecutePreprocessor
+from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
 
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,12 @@ class OCIHelper:
         parsed = urlparse(output_uri)
         bucket_name = parsed.username
         namespace = parsed.hostname
+        if not bucket_name or not namespace:
+            logger.error("Invalid OUTPUT_URI: %s", output_uri)
+            logger.error(
+                "OUTPUT_URI should have the format: oci://bucket@namespace/path/to/dir"
+            )
+            return
         prefix = parsed.path
         oci_os_client = OCIHelper.init_oci_client(
             oci.object_storage.ObjectStorageClient
@@ -170,7 +176,7 @@ def run_notebook(
     notebook_path: str,
     working_dir: Optional[str] = None,
     exclude_tags: Optional[list] = None,
-) -> None:
+) -> Optional[CellExecutionError]:
     """Runs a notebook
 
     Parameters
@@ -182,6 +188,12 @@ def run_notebook(
         If this is None, the same directory of the notebook_path will be used.
     exclude_tags : list, optional
         Tags for excluding cells, by default None
+
+    Returns
+    -------
+    CellExecutionError or None
+        Exception object when there is an error in a notebook cell.
+        Otherwise, None.
     """
     # Read the notebook
     encoding = os.environ.get("NOTEBOOK_ENCODING", "utf-8")
@@ -197,18 +209,17 @@ def run_notebook(
 
     ep = ADSExecutePreprocessor(exclude_tags=exclude_tags, kernel_name="python")
 
-    from nbconvert.preprocessors import CellExecutionError
-
     try:
         ep.preprocess(nb, {"metadata": {"path": working_dir}})
-    except CellExecutionError:
+        ex = None
+    except CellExecutionError as exc:
         msg = "Error executing the notebook.\n\n"
-        msg += f'See notebook "{notebook_filename_out}" for the traceback.'
         logger.error(msg)
-        raise
+        ex = exc
     finally:
         with open(notebook_filename_out, mode="w", encoding=encoding) as f:
             nbformat.write(nb, f)
+    return ex
 
 
 def substitute_output_uri(output_uri):
@@ -235,7 +246,7 @@ def main() -> None:
         tags = json.loads(tags)
         logger.info("Excluding cells with any of the following tags: %s", tags)
     # Run the notebook
-    run_notebook(notebook_file_path, working_dir=output_dir, exclude_tags=tags)
+    ex = run_notebook(notebook_file_path, working_dir=output_dir, exclude_tags=tags)
     # Save the outputs
     output_uri = os.environ.get("OUTPUT_URI")
     if output_uri:
@@ -245,6 +256,9 @@ def main() -> None:
         logger.error(
             "OUTPUT_URI is not defined in environment variable. No output file is copied."
         )
+
+    if ex:
+        raise ex
 
 
 if __name__ == "__main__":

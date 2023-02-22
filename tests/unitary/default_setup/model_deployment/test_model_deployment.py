@@ -8,7 +8,10 @@ import unittest
 from unittest.mock import Mock, patch
 
 from ads.common import auth, oci_client
-from ads.model.deployment.model_deployment import ModelDeployment, ModelDeploymentProperties
+from ads.model.deployment.model_deployment import (
+    ModelDeployment,
+    ModelDeploymentProperties,
+)
 
 
 class ModelDeploymentTestCase(unittest.TestCase):
@@ -63,19 +66,9 @@ class ModelDeploymentTestCase(unittest.TestCase):
         )
         assert test_result == {"result": "result"}
 
+
 class ModelDeploymentPropertiesTestCase(unittest.TestCase):
     MODEL_ID = "<MODEL_OCID>"
-
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "<region>",
-    }
 
     def assert_model_id(self, oci_model):
         """Checks if the model OCID is configured correctly."""
@@ -85,9 +78,7 @@ class ModelDeploymentPropertiesTestCase(unittest.TestCase):
             self.MODEL_ID,
         )
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_setting_model_deployment_with_model_id(self, mock_load_key_file, mock_config_from_file):
+    def test_setting_model_deployment_with_model_id(self):
         """Tests setting model deployment with model OCID."""
         # User may pass in the model ID when initializing ModelDeploymentProperties
         properties = ModelDeploymentProperties(model_id=self.MODEL_ID)

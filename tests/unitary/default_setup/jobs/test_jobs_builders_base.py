@@ -48,7 +48,7 @@ class TestBuilderBase:
             builder.set_spec("k2", ["v1"])
             builder.set_spec("k3", {"a": "b"})
             yaml_output = builder.to_yaml(uri=yaml_location)
-            assert type(yaml_output) == str
+            assert yaml_output == None
             f = open(f.name)
             yaml_content = f.read()
             yaml_dict = yaml.safe_load(yaml_content)

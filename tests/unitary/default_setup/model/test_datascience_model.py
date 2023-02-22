@@ -164,25 +164,12 @@ class TestDataScienceModel:
         "displayName": DSC_MODEL_PAYLOAD["displayName"],
     }
 
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "test_region",
-    }
-
     def setup_class(cls):
         cls.mock_date = datetime.datetime(2022, 7, 1)
 
     def setup_method(self):
         self.payload = deepcopy(DSC_MODEL_PAYLOAD)
-        with patch("oci.config.from_file", return_value=self.test_config):
-            with patch("oci.signer.load_private_key_from_file"):
-                self.mock_dsc_model = DataScienceModel(**self.payload)
+        self.mock_dsc_model = DataScienceModel(**self.payload)
 
     def prepare_dict(self, data):
         if "definedMetadataList" in data:
@@ -472,9 +459,7 @@ class TestDataScienceModel:
         expected_result = f"{self.mock_dsc_model._PREFIX}-test_name"
         assert self.mock_dsc_model._random_display_name() == expected_result
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test__to_oci_dsc_model(self, mock_load_key_file, mock_config_from_file):
+    def test__to_oci_dsc_model(self):
         """Tests creating an `OCIDataScienceModel` instance from the  `DataScienceModel`."""
         with patch.object(OCIDataScienceModel, "sync"):
             test_oci_dsc_model = OCIDataScienceModel(**OCI_MODEL_PAYLOAD)

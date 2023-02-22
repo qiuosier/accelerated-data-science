@@ -1,4 +1,3 @@
-
 import oci
 import pytest
 
@@ -26,5 +25,7 @@ class TestOpctlUtils:
         return create_signer(AuthType.API_KEY, DEFAULT_OCI_CONFIG_FILE, DEFAULT_PROFILE)
 
     def test_get_oci_region(self, oci_auth):
-        config_from_file = oci.config.from_file(DEFAULT_OCI_CONFIG_FILE, DEFAULT_PROFILE)
+        config_from_file = oci.config.from_file(
+            DEFAULT_OCI_CONFIG_FILE, DEFAULT_PROFILE
+        )
         assert get_oci_region(oci_auth) == config_from_file["region"]

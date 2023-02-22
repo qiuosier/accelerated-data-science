@@ -267,17 +267,6 @@ spec:
         type: notebook
 """
 
-# Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-# "tenancy", "user", "fingerprint" must fit the ocid pattern.
-# Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-test_config = {
-    "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-    "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-    "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-    "key_file": "<path>/<to>/<key_file>",
-    "region": "<region>",
-}
-
 
 class TestDataSciencePipelineBase:
     def test_pipeline_define(self):
@@ -811,11 +800,7 @@ class TestDataSciencePipelineBase:
         assert pipeline_step_two.depends_on == ["TestPipelineStepOne"]
 
     @patch.object(DataSciencePipeline, "to_dict")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_build_ads_pipeline(
-        self, mock_load_key_file, mock_config_from_file, mock_to_dict
-    ):
+    def test_build_ads_pipeline(self, mock_to_dict):
         pipeline_response_details = {
             "id": "Test id",
             "timeCreated": "2022-05-02T18:56:47.792000Z",
@@ -959,12 +944,8 @@ class TestDataSciencePipelineBase:
     @patch.object(oci.data_science.DataScienceClient, "create_pipeline")
     @patch.object(DataSciencePipeline, "upload_artifact")
     @patch.object(OCIModelMixin, "sync")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_datascience_create(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_sync,
         mock_create_pipeline,
         mock_upload_artifact,
@@ -980,12 +961,8 @@ class TestDataSciencePipelineBase:
         "delete_pipeline_and_wait_for_state",
     )
     @patch.object(OCIModelMixin, "sync")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_datascience_delete(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_sync,
         mock_delete_pipeline_and_wait_for_state,
     ):
@@ -1005,12 +982,8 @@ class TestDataSciencePipelineBase:
 
     @patch.object(PipelineRun, "_set_service_logging_resource")
     @patch.object(PipelineRun, "create")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_datascience_run(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_create,
         mock_set_service_logging_resource,
     ):
@@ -1194,11 +1167,7 @@ class TestDataSciencePipelineBase:
         with pytest.raises(ValueError):
             Pipeline._add_dag_to_node(dag, stepname_to_step_map)
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_set_service_logging_resource(
-        self, mock_load_key_file, mock_config_from_file
-    ):
+    def test_set_service_logging_resource(self):
         pipeline = copy.deepcopy(pipeline_one)
         service_logging = OCILog(log_type="SERVICE")
         pipeline._Pipeline__set_service_logging_resource(service_logging)
@@ -1222,9 +1191,7 @@ class TestDataSciencePipeline:
 
 
 class TestPipeline:
-    with patch("oci.config.from_file", return_value=test_config):
-        with patch("oci.signer.load_private_key_from_file"):
-            mock_active_ds_pipeline = DataSciencePipeline(lifecycle_state="ACTIVE")
+    mock_active_ds_pipeline = DataSciencePipeline(lifecycle_state="ACTIVE")
 
     def setup_class(cls):
         cls.mock_date = datetime.datetime(2022, 7, 1)
@@ -1242,12 +1209,8 @@ class TestPipeline:
         }
 
     @patch.object(Pipeline, "_populate_step_artifact_content")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_list(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_populate_step_artifact_content,
     ):
         """Tests listing pipelines in a given compartment."""
@@ -1267,12 +1230,8 @@ class TestPipeline:
             mock_list_resource.assert_called_with("test_compartment_id")
 
     @patch.object(Pipeline, "_populate_step_artifact_content")
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_from_ocid(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_populate_step_artifact_content,
     ):
         """Ensures that Pipeline can be built form OCID."""
@@ -1325,12 +1284,8 @@ class TestPipeline:
         "sync",
         return_value=mock_active_ds_pipeline,
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
     def test_download_artifacts_override(
         self,
-        mock_load_key_file,
-        mock_config_from_file,
         mock_sync,
         mock_mkdir,
         mock_exists,

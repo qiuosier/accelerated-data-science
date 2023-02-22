@@ -220,13 +220,13 @@ class TestEDAMixin(TestCase):
         self.df.ads.feature_type = {col: ["category"] for col in self.categorical_cols}
 
         pearson_plt = self.df.ads.pearson_plot()
-        assert isinstance(pearson_plt, mpl.axes._subplots.Axes)
+        assert isinstance(pearson_plt, mpl.axes._axes.Axes)
 
         cramersv_plt = self.df.ads.cramersv_plot()
-        assert isinstance(cramersv_plt, mpl.axes._subplots.Axes)
+        assert isinstance(cramersv_plt, mpl.axes._axes.Axes)
 
         corr_plt = self.df.ads.correlation_ratio_plot()
-        assert isinstance(corr_plt, mpl.axes._subplots.Axes)
+        assert isinstance(corr_plt, mpl.axes._axes.Axes)
 
     def test_warning(self):
         """Tests generating a data frame that lists feature specific warnings."""

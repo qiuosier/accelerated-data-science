@@ -6,7 +6,8 @@ import pytest
 import requests
 import yaml
 from ads.model.runtime.env_info import InferenceEnvInfo, TrainingEnvInfo
-from ads.model.runtime.utils import get_service_packs, _get_index_json_through_bucket
+from ads.model.runtime import utils
+from ads.model.runtime.utils import get_service_packs
 from cerberus import DocumentError
 
 try:
@@ -87,7 +88,7 @@ def test__get_index_json_through_bucket():
         data = json.load(f)
     open_mock = mock_open(read_data=json.dumps(data))
     with patch("fsspec.open", open_mock):
-        service_pack_list = _get_index_json_through_bucket(
+        service_pack_list = utils._get_index_json_through_bucket(
             "ociodscdev", "service-conda-packs"
         )
 

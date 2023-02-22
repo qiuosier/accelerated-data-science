@@ -155,17 +155,6 @@ OCI_MODEL_PROVENANCE_PAYLOAD = {
     "training_script": None,
 }
 
-# Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-# "tenancy", "user", "fingerprint" must fit the ocid pattern.
-# Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-test_config = {
-    "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-    "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-    "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-    "key_file": "<path>/<to>/<key_file>",
-    "region": "<region>",
-}
-
 
 class TestEstimator:
     def predict(self, x):
@@ -208,11 +197,9 @@ class TestGenericModel:
         cls.clr.fit(cls.X_train, cls.y_train)
 
     def setup_method(self):
-        with patch("oci.config.from_file", return_value=test_config):
-            with patch("oci.signer.load_private_key_from_file"):
-                self.generic_model = GenericModel(
-                    estimator=self.clr, artifact_dir="fake_folder"
-                )
+        self.generic_model = GenericModel(
+            estimator=self.clr, artifact_dir="fake_folder"
+        )
         self.mock_dsc_model = DataScienceModel(**DSC_MODEL_PAYLOAD)
 
     def teardown_method(self):
@@ -441,11 +428,7 @@ class TestGenericModel:
         new_callable=PropertyMock,
         return_value=ModelDeploymentState.CREATING,
     )
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_deploy_success(
-        self, mock_load_key_file, mock_config_from_file, mock_model_deployment_state
-    ):
+    def test_deploy_success(self, mock_model_deployment_state):
         """Ensures model deployment passes with valid input parameters."""
         test_model_id = "test_model_id"
         self.generic_model.dsc_model = MagicMock(id=test_model_id)

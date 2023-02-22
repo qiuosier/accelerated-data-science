@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 import contextlib
 import logging
@@ -125,7 +125,12 @@ class Artifact:
         scheme = urlparse(uri).scheme
         # temp_dir is used only if the uri is zip/tar file
         with tempfile.TemporaryDirectory() as temp_dir:
-            if unpack and (str(uri).endswith("zip") or str(uri).endswith("tar.gz")):
+            if unpack and (
+                str(uri).endswith(".zip")
+                or str(uri).endswith(".tar.gz")
+                or str(uri).endswith(".tar")
+                or str(uri).endswith(".tgz")
+            ):
                 unpack_path = to_path
                 to_path = temp_dir
             else:
@@ -209,7 +214,9 @@ class ScriptArtifact(Artifact):
                     "Please specify entrypoint when script source is a directory."
                 )
             output = os.path.join(self.temp_dir.name, basename)
-            shutil.make_archive(output, "zip", os.path.dirname(source), base_dir=basename)
+            shutil.make_archive(
+                output, "zip", os.path.dirname(source), base_dir=basename
+            )
             self.path = output + ".zip"
             return
         # Otherwise, use the artifact directly

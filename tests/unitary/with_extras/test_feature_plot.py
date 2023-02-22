@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8; -*-
+
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 import numpy as np
 import matplotlib as mpl
 import pandas as pd
@@ -224,7 +230,7 @@ class TestFeaturePlot:
     def test_feature_plot_return_type(self):
         # Test Series
         self.boolean.ads.feature_type = ["boolean"]
-        assert isinstance(self.boolean.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.boolean.ads.feature_plot(), mpl.axes._axes.Axes)
 
         # Test DataFrame
         curr_dir = os.path.dirname(os.path.abspath(__file__))
@@ -240,7 +246,7 @@ class TestFeaturePlot:
         self.address_invalid.ads.feature_type = ["address"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.address.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.address.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.address_invalid.ads.feature_plot() == None
 
     def test_boolean(self):
@@ -249,7 +255,7 @@ class TestFeaturePlot:
         self.boolean_invalid.ads.feature_type = ["boolean"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.boolean.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.boolean.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.boolean_invalid.ads.feature_plot() == None
 
     def test_categorical(self):
@@ -257,7 +263,7 @@ class TestFeaturePlot:
         self.cat.ads.feature_type = ["category"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.cat.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.cat.ads.feature_plot(), mpl.axes._axes.Axes)
 
     def test_constant(self):
         self.empty_series.ads.feature_type = ["constant"]
@@ -265,7 +271,7 @@ class TestFeaturePlot:
         self.constant_invalid.ads.feature_type = ["constant"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.constant.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.constant.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.constant_invalid.ads.feature_plot() == None
 
     def test_continuous(self):
@@ -274,7 +280,7 @@ class TestFeaturePlot:
         self.cts_invalid.ads.feature_type = ["continuous"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.cts.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.cts.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.cts_invalid.ads.feature_plot() == None
 
     def test_credit_card(self):
@@ -283,9 +289,9 @@ class TestFeaturePlot:
         self.creditcard_invalid.ads.feature_type = ["credit_card"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.creditcard.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.creditcard.ads.feature_plot(), mpl.axes._axes.Axes)
         assert isinstance(
-            self.creditcard_invalid.ads.feature_plot(), mpl.axes._subplots.Axes
+            self.creditcard_invalid.ads.feature_plot(), mpl.axes._axes.Axes
         )
 
     def test_datetime(self):
@@ -294,7 +300,7 @@ class TestFeaturePlot:
         self.datetime_invalid.ads.feature_type = ["date_time"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.datetime.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.datetime.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.datetime_invalid.ads.feature_plot() == None
 
     def test_discrete(self):
@@ -303,7 +309,7 @@ class TestFeaturePlot:
         self.discrete_invalid.ads.feature_type = ["discrete"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.discrete.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.discrete.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.discrete_invalid.ads.feature_plot() == None
 
     def test_integer(self):
@@ -312,7 +318,7 @@ class TestFeaturePlot:
         self.integer_invalid.ads.feature_type = ["integer"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.integer.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.integer.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.integer_invalid.ads.feature_plot() == None
 
     def test_ordinal(self):
@@ -321,7 +327,7 @@ class TestFeaturePlot:
         self.ordinal_invalid.ads.feature_type = ["ordinal"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.ordinal.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.ordinal.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.ordinal_invalid.ads.feature_plot() == None
 
     def test_latlong(self):
@@ -330,7 +336,7 @@ class TestFeaturePlot:
         self.latlong_invalid.ads.feature_type = ["lat_long"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.latlong.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.latlong.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.latlong_invalid.ads.feature_plot() == None
 
     def test_string(self):
@@ -339,7 +345,7 @@ class TestFeaturePlot:
         self.string_invalid.ads.feature_type = ["string"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.string.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.string.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.string_invalid.ads.feature_plot() == None
 
     def test_text(self):
@@ -348,7 +354,7 @@ class TestFeaturePlot:
         self.text_invalid.ads.feature_type = ["text"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.text.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.text.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.text_invalid.ads.feature_plot() == None
 
     def test_gis(self):
@@ -357,7 +363,7 @@ class TestFeaturePlot:
         self.latlong_invalid.ads.feature_type = ["gis"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.latlong.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.latlong.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.latlong_invalid.ads.feature_plot() == None
 
     def test_zipcode(self):
@@ -366,7 +372,7 @@ class TestFeaturePlot:
         self.zipcode_invalid.ads.feature_type = ["zip_code"]
 
         assert self.empty_series.ads.feature_plot() == None
-        assert isinstance(self.zipcode.ads.feature_plot(), mpl.axes._subplots.Axes)
+        assert isinstance(self.zipcode.ads.feature_plot(), mpl.axes._axes.Axes)
         assert self.zipcode_invalid.ads.feature_plot() == None
 
     def test_is_float(self):
@@ -408,7 +414,7 @@ class TestFeaturePlot:
         df_empty = _to_lat_long(self.empty_series, self.zipcode_coord)
         assert isinstance(
             _plot_gis_scatter(df_valid, "latitude", "longitude"),
-            mpl.axes._subplots.Axes,
+            mpl.axes._axes.Axes,
         )
         assert _plot_gis_scatter(df_invalid, "latitude", "longitude") == None
         assert _plot_gis_scatter(df_empty, "latitude", "longitude") == None

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 from abc import ABC, abstractmethod
 from ads.jobs.schema.validator import ValidatorFactory
@@ -137,7 +137,9 @@ class Serializable(ABC):
             return cls.from_dict(json_dict)
         raise ValueError("Must provide either JSON string or URI location")
 
-    def to_yaml(self, uri: str = None, dumper: callable = dumper, **kwargs) -> str:
+    def to_yaml(
+        self, uri: str = None, dumper: callable = dumper, **kwargs
+    ) -> Union[str, None]:
         """Returns object serialized as a YAML string
 
         Args:
@@ -147,11 +149,15 @@ class Serializable(ABC):
                            For other storage connections consider e.g. host, port, username, password, etc.
 
         Returns:
-            string: Serialized version of object
+            Union[str, None]
+                Serialized version of object.
+                None in case when `uri` provided.
         """
-        yaml_string = yaml.dump(self.to_dict(), Dumper=dumper)
+        yaml_string = yaml.dump(self.to_dict(**kwargs), Dumper=dumper)
         if uri:
             self._write_to_file(s=yaml_string, uri=uri, **kwargs)
+            return None
+
         return yaml_string
 
     @classmethod

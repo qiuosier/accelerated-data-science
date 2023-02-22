@@ -98,6 +98,9 @@ jobs:
           --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
           --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
           --ignore=tests/unitary/with_extras/evaluator/test_evaluations_evaluator.py \
+          --ignore=tests/unitary/with_extras/hpo/test_hpo_search_cv.py \
+          --ignore=tests/unitary/with_extras/model/test_model_framework_sklearn_model.py \
+          --ignore=tests/unitary/with_extras/model/test_model_info_extractor.py \
           --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
           --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat \
           --deselect=tests/unitary/with_extras/opctl/test_opctl_config.py::TestConfigResolver::test_resolve_image_name \

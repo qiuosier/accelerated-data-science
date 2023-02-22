@@ -86,23 +86,8 @@ UNFORMATTED_LOGS = [
 
 
 class TestConsolidatedLog:
-    # Current unittests running mock for "oci.config.from_file" and has specific requirement for test_config:
-    # "tenancy", "user", "fingerprint" must fit the ocid pattern.
-    # Add "# must be a real-like ocid" in the same line to pass pre-commit hook validation
-    test_config = {
-        "tenancy": "ocid1.tenancy.oc1..xxx",  # must be a real-like ocid
-        "user": "ocid1.user.oc1..xxx",  # must be a real-like ocid
-        "fingerprint": "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
-        "key_file": "<path>/<to>/<key_file>",
-        "region": "test_region",
-    }
-
     @patch.object(ConsolidatedLog, "_collect_logs", return_value=FORMATTED_LOGS)
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_search_and_format(
-        self, mock_load_key_file, mock_config_from_file, mock_collect_log
-    ):
+    def test_search_and_format(self, mock_collect_log):
         oci_log = OCILog(source="test")
         consolidated_log = ConsolidatedLog(oci_log)
         time_start = datetime.datetime.utcnow()
@@ -135,11 +120,7 @@ class TestConsolidatedLog:
         assert logs[1] == FORMATTED_LOGS[1]
 
     @patch.object(ConsolidatedLog, "_collect_logs", return_value=UNFORMATTED_LOGS)
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_search_and_no_format(
-        self, mock_load_key_file, mock_config_from_file, mock_collect_log
-    ):
+    def test_search_and_no_format(self, mock_collect_log):
         oci_log = OCILog(source="test")
         consolidated_log = ConsolidatedLog(oci_log)
         time_start = datetime.datetime.utcnow()
@@ -172,11 +153,7 @@ class TestConsolidatedLog:
         assert logs[1] == UNFORMATTED_LOGS[1]
 
     @patch.object(OCILog, "search", return_value=[UNFORMATTED_LOGS[0]])
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_collect_formatted_logs(
-        self, mock_load_key_file, mock_config_from_file, mock_search
-    ):
+    def test_collect_formatted_logs(self, mock_search):
         oci_log = OCILog(source="test", annotation="access")
         consolidated_log = ConsolidatedLog(oci_log)
         time_start = datetime.datetime.utcnow()
@@ -206,11 +183,7 @@ class TestConsolidatedLog:
         assert logs == [FORMATTED_LOGS[0]]
 
     @patch.object(OCILog, "search", return_value=[UNFORMATTED_LOGS[0]])
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_collect_unformatted_logs(
-        self, mock_load_key_file, mock_config_from_file, mock_search
-    ):
+    def test_collect_unformatted_logs(self, mock_search):
         oci_log = OCILog(source="test", annotation="access")
         consolidated_log = ConsolidatedLog(oci_log)
         time_start = datetime.datetime.utcnow()
@@ -239,9 +212,7 @@ class TestConsolidatedLog:
 
         assert logs == [UNFORMATTED_LOGS[0]]
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_format_and_add_annotation(self, mock_load_key_file, mock_config_from_file):
+    def test_format_and_add_annotation(self):
         oci_log = OCILog(source="test", annotation="access")
         consolidated_log = ConsolidatedLog(oci_log)
 
@@ -251,11 +222,7 @@ class TestConsolidatedLog:
 
         assert logs == FORMATTED_LOGS[0]
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_print_log_annotation_message(
-        self, mock_load_key_file, mock_config_from_file, capsys
-    ):
+    def test_print_log_annotation_message(self, capsys):
         access_log = OCILog(source="test", annotation="access")
         predict_log = OCILog(source="test", annotation="predict")
         consolidated_log = ConsolidatedLog(access_log, predict_log)
@@ -273,9 +240,7 @@ class TestConsolidatedLog:
         captured = capsys.readouterr()
         assert captured.out == "[P] - predict log\n"
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_print(self, mock_load_key_file, mock_config_from_file, capsys):
+    def test_print(self, capsys):
         access_log = OCILog(source="test", annotation="access")
         predict_log = OCILog(source="test", annotation="predict")
         consolidated_log = ConsolidatedLog(access_log, predict_log)
@@ -287,9 +252,7 @@ class TestConsolidatedLog:
         assert "[A] - 2022-10-14 22:32:06 - POST /predict 1.1\n" in captured.out
         assert "[P] - 2022-10-14 22:32:30 - --- Logging error ---" in captured.out
 
-    @patch("oci.config.from_file", return_value=test_config)
-    @patch("oci.signer.load_private_key_from_file")
-    def test_print_log_details(self, mock_load_key_file, mock_config_from_file, capsys):
+    def test_print_log_details(self, capsys):
         access_log = OCILog(source="test", annotation="access")
         predict_log = OCILog(source="test", annotation="predict")
         consolidated_log = ConsolidatedLog(access_log, predict_log)

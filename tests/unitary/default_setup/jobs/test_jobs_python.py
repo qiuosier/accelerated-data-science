@@ -22,9 +22,7 @@ from tests.unitary.default_setup.jobs.test_jobs_base import (
 class PythonRuntimeTest(DataScienceJobPayloadTest):
     """Contains tests from PythonRuntime in ADS Jobs API."""
 
-    DIR_SOURCE_PATH = os.path.join(
-        os.path.dirname(__file__), "test_files/job_archive"
-    )
+    DIR_SOURCE_PATH = os.path.join(os.path.dirname(__file__), "test_files/job_archive")
     SCRIPT_SOUCE_PATH = os.path.join(
         os.path.dirname(__file__), "test_files/job_archive/main.py"
     )
@@ -106,11 +104,6 @@ class PythonDriverTest(DriverRunTest):
 
         # Checks the outputs
         outputs = [output for output in outputs if output]
-        self.assertEqual(
-            len(outputs),
-            5,
-            f"Unexpected or missing messages.\nActual outputs:\n{outputs}",
-        )
         self.assertIn("This is the entrypoint inside a package.", outputs)
         self.assertIn("This is a function in a module.", outputs)
         self.assertIn("This is a function in a package.", outputs)

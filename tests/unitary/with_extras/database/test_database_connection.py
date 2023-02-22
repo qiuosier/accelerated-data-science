@@ -26,7 +26,8 @@ class TestDatabaseConnection:
     fake_repo_path = "/tmp/nonexistent_path"
     secret_id = "ocid1.vaultsecret.oc1.iad.unittestid"
     wallet_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../../data/test_Wallet_DB202103311218.zip"
+        os.path.dirname(os.path.abspath(__file__)),
+        "../../../data/test_Wallet_DB202103311218.zip",
     )
     invalid_keys = ["/testing", ".testing", "../"]
 
@@ -137,8 +138,14 @@ class TestDatabaseConnection:
         connector = Connector(key=self.key)
         assert connector.config == self.local_credential
         assert connector.uri.split("@")[1] == self.local_credential["database_name"]
-        assert connector.uri.split("//")[1].split(":")[0] == self.local_credential["username"]
-        assert connector.uri.split(":")[2].split("@")[0] == self.local_credential["password"]
+        assert (
+            connector.uri.split("//")[1].split(":")[0]
+            == self.local_credential["username"]
+        )
+        assert (
+            connector.uri.split(":")[2].split("@")[0]
+            == self.local_credential["password"]
+        )
         assert connector.uri.split("+")[0] == self.local_credential["database_type"]
 
     def test_connector_with_nonexistent_local_dir(self):
