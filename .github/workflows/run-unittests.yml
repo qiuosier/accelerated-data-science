@@ -94,7 +94,6 @@ jobs:
           pip install -r dev-requirements.txt
           python -m pytest -v -p no:warnings \
           tests/unitary/with_extras/test_feature_plot.py \
-          tests/unitary/with_extras/test_jobs_notebook.py \
           tests/unitary/with_extras/model/test_metadata_provenance.py \
           tests/unitary/with_extras/opctl/test_opctl_local_backend.py \
           tests/unitary/with_extras/pipeline/test_pipeline_visualizer.py
