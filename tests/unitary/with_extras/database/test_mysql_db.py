@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*--
+
+# Copyright (c) 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 from mock import patch
 from unittest import mock
 from unittest.mock import call
@@ -37,16 +43,14 @@ class TestMySQL_DB:
                 call().__enter__().execute(f"drop table {self.table_name}"),
                 call()
                 .__enter__()
-                .execute(
-                    "create table TEST_TABLE_V1 (col1 INTEGER, col2 VARCHAR(16))"
-                ),
+                .execute("create table TEST_TABLE_V1 (col1 INTEGER, col2 VARCHAR(16))"),
                 call()
                 .__enter__()
                 .executemany(
                     "insert into TEST_TABLE_V1(col1, col2) values(%s,%s)",
-                    [[1, "èèààòò£±"], [2, "text"]]
+                    [[1, "èèààòò£±"], [2, "text"]],
                 ),
-                call().__exit__(None, None, None)
+                call().__exit__(None, None, None),
             ]
             cursor.assert_has_calls(calls, any_order=False)
             connection.temp_dir = None

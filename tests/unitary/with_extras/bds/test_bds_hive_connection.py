@@ -1,8 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*--
+
+# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 import mock
 import unittest
 import pytest
 import pandas as pd
-from unittest.mock import MagicMock, Mock
 from ads.bds.big_data_service import ADSHiveConnection
 
 

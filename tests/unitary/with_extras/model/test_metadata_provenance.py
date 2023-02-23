@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*--
+
+# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -34,7 +41,7 @@ class TestModelProvenanceMetadata:
             remote.url = "remote_url"
             remotes.values.return_value = [remote]
             repo.remotes = remotes
-            repo.working_dir = str("/home/datascience")
+            repo.working_dir = os.path.abspath("./fake_folder")
             repo.is_dirty.return_value = False
             mock_repo.return_value = repo
 
@@ -69,7 +76,7 @@ class TestModelProvenanceMetadata:
             remote.url = "remote_url"
             remotes.values.return_value = [remote]
             repo.remotes = remotes
-            repo.working_dir = str("/home/datascience")
+            repo.working_dir = os.path.abspath("./fake_folder")
             repo.is_dirty.return_value = False
             mock_repo.return_value = repo
 
@@ -92,7 +99,7 @@ class TestModelProvenanceMetadata:
             remote.url = "remote_url"
             remotes.values.return_value = [remote]
             repo.remotes = remotes
-            repo.working_dir = str("/home/datascience")
+            repo.working_dir = os.path.abspath("./fake_folder")
             repo.is_dirty.return_value = True
             mock_repo.return_value = repo
             head = MagicMock()

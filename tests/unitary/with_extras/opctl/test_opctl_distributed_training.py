@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*--
+
+# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 import builtins
 import os
 import tempfile
@@ -5,7 +11,6 @@ from configparser import ConfigParser
 from io import StringIO
 from unittest import mock
 
-import pytest
 from ads.opctl.distributed.common.abstract_cluster_provider import ClusterProvider
 from ads.opctl.cmds import _save_yaml
 

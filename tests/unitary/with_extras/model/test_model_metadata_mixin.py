@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*--
+
+# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+
 import numpy as np
 from sklearn import datasets, linear_model
 
@@ -5,7 +11,6 @@ from ads.model.generic_model import GenericModel
 from ads.model.framework.sklearn_model import SklearnModel
 from ads.model.framework.xgboost_model import XGBoostModel
 from ads.feature_engineering.schema import Schema
-from ads.config import JOB_RUN_OCID, NB_SESSION_OCID
 import sklearn
 import os
 import shutil
