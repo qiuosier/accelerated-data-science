@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -236,8 +235,10 @@ class TestConfigResolver:
             and r.config["execution"]["conda_type"] == "service"
         )
 
-    @pytest.mark.skip("This test is doing api call to oci, it is not a unit test."
-                      "Has to be mocked or moved to 'integration' tests folder")
+    @pytest.mark.skip(
+        "This test is doing api call to oci, it is not a unit test."
+        "Has to be mocked or moved to 'integration' tests folder"
+    )
     def test_resolve_image_name(self):
         config = {
             "execution": {

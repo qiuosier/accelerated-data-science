@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -136,8 +135,28 @@ class TestCommonUtils:
         ]
         data = {
             "col2": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0],
-            "col5": ["x", "y", "y", "x", "y", "x", "x", "x", "y", "y", "x", "x", "x", "x", "x", "y", "x", "x", "x",
-                     "y"],
+            "col5": [
+                "x",
+                "y",
+                "y",
+                "x",
+                "y",
+                "x",
+                "x",
+                "x",
+                "y",
+                "y",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "y",
+                "x",
+                "x",
+                "x",
+                "y",
+            ],
         }
         df = pd.DataFrame(data=data)
         the_x = df["col5"]

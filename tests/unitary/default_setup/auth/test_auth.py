@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -361,31 +360,38 @@ class TestAuthFactory(TestCase):
             key_file="<path>/<to>/<key_file>",
         )
         auth_type = AuthType.API_KEY
-        set_auth(auth=auth_type, config=config)
+        set_auth(auth=auth_type, config=config, client_kwargs={"timeout": 1})
         auth_state = AuthState()
         assert auth_state.oci_config
         assert auth_state.oci_config_path == oci.config.DEFAULT_LOCATION
         assert auth_state.oci_key_profile == "DEFAULT"
+        assert auth_state.oci_client_kwargs == {"timeout": 1}
         signer = default_signer()
         assert signer["config"]["user"] == config["user"]
         default_signer()
         assert signer["config"]["user"] == config["user"]
 
-        set_auth(auth=auth_type, oci_config_location="~/path_to_config")
+        set_auth(
+            auth=auth_type,
+            oci_config_location="~/path_to_config",
+            client_kwargs={"timeout": 2},
+        )
         auth_state = AuthState()
         assert not auth_state.oci_config
         assert auth_state.oci_config_path == "~/path_to_config"
         assert auth_state.oci_key_profile == "DEFAULT"
+        assert auth_state.oci_client_kwargs == {"timeout": 2}
         default_signer()
         mock_config_from_file.assert_called_with("~/path_to_config", "DEFAULT")
         default_signer()
         mock_config_from_file.assert_called_with("~/path_to_config", "DEFAULT")
 
-        set_auth(auth=auth_type, config=config)
+        set_auth(auth=auth_type, config=config, client_kwargs={"timeout": 3})
         auth_state = AuthState()
         assert auth_state.oci_config
         assert auth_state.oci_config_path == oci.config.DEFAULT_LOCATION
         assert auth_state.oci_key_profile == "DEFAULT"
+        assert auth_state.oci_client_kwargs == {"timeout": 3}
         signer = default_signer()
         assert signer["config"]["key_file"] == config["key_file"]
         signer = default_signer()
@@ -455,14 +461,29 @@ class TestAuthContext:
     @mock.patch("os.path.exists")
     def test_auth_context_inside_auth_context(self, mock_path_exists):
         with AuthContext():
-            ads.set_auth(signer="signer_for_the_FIRST_context")
+            ads.set_auth(
+                signer="signer_for_the_FIRST_context", client_kwargs={"timeout": 1}
+            )
             assert AuthState().oci_signer == "signer_for_the_FIRST_context"
+            assert AuthState().oci_client_kwargs == {"timeout": 1}
+
             with AuthContext():
-                ads.set_auth(signer="signer_for_the_SECOND_context")
+                ads.set_auth(
+                    signer="signer_for_the_SECOND_context", client_kwargs={"timeout": 2}
+                )
+                assert AuthState().oci_client_kwargs == {"timeout": 2}
                 assert AuthState().oci_signer == "signer_for_the_SECOND_context"
-                ads.set_auth(signer="ANOTHER_signer_for_the_SECOND_context")
+                ads.set_auth(
+                    signer="ANOTHER_signer_for_the_SECOND_context",
+                    client_kwargs={"timeout": 3},
+                )
                 assert AuthState().oci_signer == "ANOTHER_signer_for_the_SECOND_context"
+                assert AuthState().oci_client_kwargs == {"timeout": 3}
             assert AuthState().oci_signer == "signer_for_the_FIRST_context"
+            assert AuthState().oci_client_kwargs == {"timeout": 1}
+
+        with AuthContext(client_kwargs={"timeout": 4}):
+            assert AuthState().oci_client_kwargs == {"timeout": 4}
 
     def test_with_set_auth_returns_error(self):
         with pytest.raises(ValueError):

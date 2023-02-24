@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2022, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -110,5 +109,7 @@ def test_import():
         PDFProcessor,
         WordProcessor,
     )
+    from ads.model.framework.huggingface_model import HuggingFacePipelineModel
+    from ads.model.extractor.huggingface_extractor import HuggingFaceExtractor
 
     assert True

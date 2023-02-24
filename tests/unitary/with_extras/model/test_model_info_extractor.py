@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
+import copy
 import json
 import unittest
 import copy
@@ -81,6 +81,7 @@ class TestModelInfoExtractor(unittest.TestCase):
 
     def test_ADS_sklearn_model(self):
         from sklearn.datasets import load_iris
+
         df = load_iris(as_frame=True).data
         df["target"] = load_iris(as_frame=True).target
         ds = DatasetFactory.open(df, target="target")
@@ -119,6 +120,7 @@ class TestModelInfoExtractor(unittest.TestCase):
 
     def test_generic_lightgbm_model(self):
         from sklearn.datasets import load_iris
+
         X_train, y_train = load_iris(return_X_y=True)
         clf = lgb.LGBMClassifier()
         clf.fit(X_train, y_train)

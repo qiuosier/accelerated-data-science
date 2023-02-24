@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 """Unit tests for model frameworks. Includes tests for:
@@ -19,10 +19,12 @@ import onnx
 import onnxruntime as rt
 import pandas as pd
 import pytest, mock, sys
+import tempfile
 from ads.model.framework.lightgbm_model import LightGBMModel
+from ads.model.serde.model_serializer import LightGBMOnnxModelSerializer
 from sklearn.datasets import load_iris, make_regression
 
-tmp_model_dir = "/tmp/model"
+tmp_model_dir = tempfile.mkdtemp()
 
 
 class TestLightGBMModel:

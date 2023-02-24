@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
+"""Unit tests for model frameworks. Includes tests for:
+ - GenericModel
+"""
 import os
 import random
 import shutil
@@ -15,6 +17,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pandas as pd
 import pytest
 import yaml
+import numpy as np
 from ads.common import utils
 from ads.config import (
     JOB_RUN_COMPARTMENT_OCID,
@@ -318,7 +321,11 @@ class TestGenericModel:
             model_file_name="fake_model_name",
             force_overwrite=True,
         )
-        self.generic_model.verify(self.X_test.tolist())
+        prediction_1 = self.generic_model.verify(self.X_test.tolist())
+        assert isinstance(prediction_1, dict), "Failed to verify json payload."
+
+        prediction_2 = self.generic_model.verify(self.X_test.tolist())
+        assert isinstance(prediction_2, dict), "Failed to verify input data."
 
     def test_reload(self):
         """test the reload."""
@@ -368,33 +375,94 @@ class TestGenericModel:
         with pytest.raises(NotImplementedError):
             self.generic_model.save()
 
-    def test_validate_image_args(self):
-        """Test extracting a valid image arg."""
-        from PIL import Image
-
-        test_image_path = os.path.join(
-            f"{os.path.dirname(os.path.abspath(__file__))}/test_files/test.png",
+    def test_set_model_input_serializer(self):
+        """Tests set_model_input_serializer() with different input types."""
+        from ads.model.serde.model_input import (
+            CloudpickleModelInputSERDE,
+            JsonModelInputSERDE,
         )
-        test_image = Image.open(test_image_path)
-        test_data_1, test_data_type_1 = self.generic_model._handle_image_input(
-            data=None, **{"image": test_image}
-        )
-        assert (test_data_type_1 == "image", "Cannot validate PIL.Image object.")
+        from ads.model.serde.common import SERDE
 
-        test_data_2, test_data_type_2 = self.generic_model._handle_image_input(
-            data=None, **{"image": test_image_path}
+        generic_model = GenericModel(estimator=self.clr, artifact_dir="fake_folder")
+        # set by passing str
+        generic_model.set_model_input_serializer("cloudpickle")
+        assert isinstance(
+            generic_model.get_data_serializer(), CloudpickleModelInputSERDE
         )
-        assert (test_data_type_2 == "image", "Cannot validate valid image path.")
 
-    def test_validate_image_args_fail(self):
+        # set by passing ModelInputSerializerType
+        generic_model.set_model_input_serializer("json")
+        assert isinstance(generic_model.get_data_serializer(), JsonModelInputSERDE)
+
+        # set customized serialize by inheriting from SERDE
+        class MySERDEA(SERDE):
+            def __init__(self):
+                super().__init__()
+
+            def serialize(self, data):
+                return 1
+
+            def deserialize(self, data):
+                return 2
+
+        generic_model.set_model_input_serializer(model_input_serializer=MySERDEA())
+        assert generic_model.get_data_serializer().serialize(2) == 1
+
+        # set customized serialize without inheritance
+        class MySERDEB:
+            def __init__(self):
+                super().__init__()
+
+            def serialize(self, data):
+                return 2
+
+            def deserialize(self, data):
+                return 1
+
+        generic_model.set_model_input_serializer(model_input_serializer=MySERDEB())
+        assert generic_model.get_data_serializer().serialize(1) == 2
+        assert generic_model.model_input_serializer.name == "customized"
+
+    @patch("ads.model.serde.model_input.JsonModelInputSerializer.serialize")
+    def test_handle_input(self, mock_serializer):
+        """Test validate input data from verify/predict."""
+        fake_path = "/tmp/fake_path"
+        with patch.object(GenericModel, "_handle_image_input") as mock_handle_image:
+            self.generic_model._handle_input_data(**{"image": fake_path})
+            mock_handle_image.assert_called_with(image=fake_path)
+
+        with pytest.raises(TypeError):
+            self.generic_model._handle_input_data(
+                data=self.X_test, auto_serialize_data=False
+            )
+
+        with pytest.raises(ValueError):
+            self.generic_model._handle_input_data(json=self.X_test.tolist())
+
+    @pytest.mark.parametrize(
+        "test_data",
+        [
+            pd.Series([1, 2, 3]),
+            [1, 2, 3],
+            np.array([1, 2, 3]),
+            pd.DataFrame({"a": [1, 2], "b": [2, 3], "c": [3, 4]}),
+            "I have an apple",
+            {"a": [1], "b": [2], "c": [3]},
+        ],
+    )
+    @patch("ads.model.serde.model_input.JsonModelInputSerializer.serialize")
+    def test_handle_different_input_data(self, mock_serializer, test_data):
+        """Test validate input data from verify/predict."""
+        self.generic_model._handle_input_data(data=test_data)
+        mock_serializer.assert_called_with(data=test_data)
+
+    def test_handle_image_input_fail(self):
         """Test extracting an invalid image arg."""
         invalid_image_path = os.path.join(
             f"{os.path.dirname(os.path.abspath(__file__))}/test_files/invalid_model_artifacts/runtime.yaml",
         )
         with pytest.raises(ValueError):
-            self.generic_model._handle_image_input(
-                data=None, **{"image": invalid_image_path}
-            )
+            self.generic_model._handle_image_input(image=invalid_image_path)
 
     def test_generic_model_serialize(self):
         self.generic_model.prepare(
@@ -766,6 +834,7 @@ class TestGenericModel:
             remove_existing_artifact=test_args.get("remove_existing_artifact", True),
             auth={"config": "value"},
             region=None,
+            timeout=test_args.get("timeout"),
         )
 
         expected_model_properties = ModelProperties(

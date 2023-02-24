@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2022, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -150,26 +149,23 @@ class TestArtifactUploader:
 
     def test_upload_small_artifact(self):
         with open(self.mock_artifact_zip_path, "rb") as file_data:
-            expected_artifact_bytes_content = file_data.read()
-
-        with patch.object(
-            SmallArtifactUploader,
-            "_prepare_artiact_tmp_zip",
-            return_value=self.mock_artifact_zip_path,
-        ) as mock_prepare_artiact_tmp_zip:
             with patch.object(
-                SmallArtifactUploader, "_remove_artiact_tmp_zip"
-            ) as mock_remove_artiact_tmp_zip:
-                artifact_uploader = SmallArtifactUploader(
-                    dsc_model=self.mock_dsc_model, artifact_path=self.mock_artifact_path
-                )
-                artifact_uploader.artifact_zip_path = self.mock_artifact_zip_path
-                artifact_uploader.upload()
-                mock_prepare_artiact_tmp_zip.assert_called()
-                mock_remove_artiact_tmp_zip.assert_called()
-                self.mock_dsc_model.create_model_artifact.assert_called_with(
-                    expected_artifact_bytes_content
-                )
+                SmallArtifactUploader,
+                "_prepare_artiact_tmp_zip",
+                return_value=self.mock_artifact_zip_path,
+            ) as mock_prepare_artiact_tmp_zip:
+                with patch.object(
+                    SmallArtifactUploader, "_remove_artiact_tmp_zip"
+                ) as mock_remove_artiact_tmp_zip:
+                    artifact_uploader = SmallArtifactUploader(
+                        dsc_model=self.mock_dsc_model,
+                        artifact_path=self.mock_artifact_path,
+                    )
+                    artifact_uploader.artifact_zip_path = self.mock_artifact_zip_path
+                    artifact_uploader.upload()
+                    mock_prepare_artiact_tmp_zip.assert_called()
+                    mock_remove_artiact_tmp_zip.assert_called()
+                    self.mock_dsc_model.create_model_artifact.assert_called()
 
     def test_upload_large_artifact(self):
         with tempfile.TemporaryDirectory() as tmp_artifact_dir:

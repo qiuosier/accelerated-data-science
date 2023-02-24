@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -38,7 +37,10 @@ class ADSTunerTest(unittest.TestCase):
     """Contains test cases for ads.hpo.search_cv"""
 
     iris_dataset = load_iris(return_X_y=True)
-    breast_cancer_dataset = load_breast_cancer(as_frame=True).data, load_breast_cancer(as_frame=True).target
+    breast_cancer_dataset = (
+        load_breast_cancer(as_frame=True).data,
+        load_breast_cancer(as_frame=True).target,
+    )
 
     @staticmethod
     def get_adstuner(

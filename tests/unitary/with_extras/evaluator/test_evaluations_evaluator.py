@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -114,16 +113,35 @@ class EvaluationMetricsTest(unittest.TestCase):
 
     def test_auc_against_sklearn(self):
         data = {
-            "col1": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            "col1": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+            ],
             "col2": np.random.randint(10, size=20),
             "col3": np.random.default_rng().uniform(low=1, high=100, size=20),
             "col4": 100 * np.random.rand(20) + 10,
-            "target": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0]
+            "target": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0],
         }
         df = pd.DataFrame(data=data)
-        binary_fk = DatasetFactory.open(
-            df, target="target"
-        )
+        binary_fk = DatasetFactory.open(df, target="target")
 
         train, test = binary_fk.train_test_split(test_size=0.15)
         X_train = train.X.values

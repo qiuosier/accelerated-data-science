@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -22,8 +21,53 @@ class TestFeatureTypesDefaultWarnings:
         [], columns=["Warning", "Message", "Metric", "Value"]
     )
 
-    nums = pd.Series([1, 2, 3, 4, 5, np.nan, 6, 7, np.nan, np.nan, 8, 9, 10, np.nan, 3, 5, 8, 2, 1, 5, 1, 1])
-    letters = pd.Series([np.nan, "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", np.nan, "l", "m", "n", "o"])
+    nums = pd.Series(
+        [
+            1,
+            2,
+            3,
+            4,
+            5,
+            np.nan,
+            6,
+            7,
+            np.nan,
+            np.nan,
+            8,
+            9,
+            10,
+            np.nan,
+            3,
+            5,
+            8,
+            2,
+            1,
+            5,
+            1,
+            1,
+        ]
+    )
+    letters = pd.Series(
+        [
+            np.nan,
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            np.nan,
+            "l",
+            "m",
+            "n",
+            "o",
+        ]
+    )
     skewed = pd.Series([0, 0, 0, np.nan, 0, 0, 1, 1, np.nan, 0, 0, 0, 0, 0])
 
     def test_missing_values_nums_feature(self):
@@ -69,4 +113,3 @@ class TestFeatureTypesDefaultWarnings:
         assert warning_df.loc[0]["Metric"] == "count"
         assert abs(warning_df.loc[1]["Value"] - 71.4) < 0.1
         assert warning_df.loc[1]["Metric"] == "percentage"
-

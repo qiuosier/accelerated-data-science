@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2022, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -363,7 +362,7 @@ class TestDataScienceModel:
         oci_dsc_model = OCIDataScienceModel(**OCI_MODEL_PAYLOAD)
         mock_oci_dsc_model_create.return_value = oci_dsc_model
 
-        # to check rundom display name
+        # to check random display name
         self.mock_dsc_model.with_display_name("")
         result = self.mock_dsc_model.create(
             bucket_uri="test_bucket_uri",
@@ -380,6 +379,7 @@ class TestDataScienceModel:
             remove_existing_artifact=False,
             region=None,
             auth=None,
+            timeout=None,
         )
         mock_sync.assert_called()
         assert self.prepare_dict(result.to_dict()["spec"]) == self.prepare_dict(
@@ -587,8 +587,8 @@ class TestDataScienceModel:
             ) == self.prepare_dict(dsc_model_payload)
 
     def test_upload_artifact(self):
-        """Tests uploading arrtifacts to the model catalog."""
-        self.mock_dsc_model.dsc_model = MagicMock()
+        """Tests uploading artifacts to the model catalog."""
+        self.mock_dsc_model.dsc_model = MagicMock(__class__=MagicMock())
 
         # Artifact size greater than 2GB
         with patch.object(
@@ -609,7 +609,11 @@ class TestDataScienceModel:
                         region="test_region",
                         overwrite_existing_artifact=False,
                         remove_existing_artifact=False,
+                        timeout=1,
                     )
+                    assert self.mock_dsc_model.dsc_model.__class__.kwargs == {
+                        "timeout": 1
+                    }
                     mock_init.assert_called_with(
                         dsc_model=self.mock_dsc_model.dsc_model,
                         artifact_path=self.mock_dsc_model.artifact,
@@ -630,7 +634,10 @@ class TestDataScienceModel:
                     "ads.common.utils.folder_size",
                     return_value=_MAX_ARTIFACT_SIZE_IN_BYTES - 100,
                 ):
-                    self.mock_dsc_model.upload_artifact()
+                    self.mock_dsc_model.upload_artifact(timeout=2)
+                    assert self.mock_dsc_model.dsc_model.__class__.kwargs == {
+                        "timeout": 2
+                    }
                     mock_init.assert_called_with(
                         dsc_model=self.mock_dsc_model.dsc_model,
                         artifact_path=self.mock_dsc_model.artifact,
@@ -644,7 +651,9 @@ class TestDataScienceModel:
             return_value={"content-length": _MAX_ARTIFACT_SIZE_IN_BYTES + 100}
         )
         self.mock_dsc_model.dsc_model = MagicMock(
-            id="test_id", get_artifact_info=mock_get_artifact_info
+            id="test_id",
+            get_artifact_info=mock_get_artifact_info,
+            __class__=MagicMock(),
         )
         with patch.object(
             LargeArtifactDownloader, "__init__", return_value=None
@@ -663,7 +672,9 @@ class TestDataScienceModel:
                     region="test_region",
                     overwrite_existing_artifact=False,
                     remove_existing_artifact=False,
+                    timeout=1,
                 )
+                assert self.mock_dsc_model.dsc_model.__class__.kwargs == {"timeout": 1}
 
                 mock_init.assert_called_with(
                     dsc_model=self.mock_dsc_model.dsc_model,
@@ -682,18 +693,21 @@ class TestDataScienceModel:
             return_value={"content-length": _MAX_ARTIFACT_SIZE_IN_BYTES - 100}
         )
         self.mock_dsc_model.dsc_model = MagicMock(
-            id="test_id", get_artifact_info=mock_get_artifact_info
+            id="test_id",
+            get_artifact_info=mock_get_artifact_info,
+            __class__=MagicMock(),
         )
         with patch.object(
             SmallArtifactDownloader, "__init__", return_value=None
         ) as mock_init:
             with patch.object(SmallArtifactDownloader, "download") as mock_download:
                 self.mock_dsc_model.download_artifact(
-                    target_dir="test_target_dir", force_overwrite=True
+                    target_dir="test_target_dir", force_overwrite=True, timeout=2
                 )
                 mock_init.assert_called_with(
                     dsc_model=self.mock_dsc_model.dsc_model,
                     target_dir="test_target_dir",
                     force_overwrite=True,
                 )
+                assert self.mock_dsc_model.dsc_model.__class__.kwargs == {"timeout": 2}
                 mock_download.assert_called()

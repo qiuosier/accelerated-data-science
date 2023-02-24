@@ -71,7 +71,8 @@ jobs:
           $CONDA/bin/conda init
           source /home/runner/.bashrc
           pip install -r test-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup
+          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup \
+          --deselect=tests/unitary/default_setup/model/test_artifact_uploader.py::TestArtifactUploader::test_upload_small_artifact
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90

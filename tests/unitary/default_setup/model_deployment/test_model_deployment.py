@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
 
 # Copyright (c) 2022, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 import unittest
+import pytest
+import numpy as np
 from unittest.mock import Mock, patch
 
 from ads.common import auth, oci_client
@@ -36,6 +37,9 @@ class ModelDeploymentTestCase(unittest.TestCase):
             auth=self.test_model_deployment.config.get("signer"),
         )
         assert test_result == {"result": "result"}
+
+        with pytest.raises(TypeError):
+            self.test_model_deployment.predict(data=np.array([1, 2, 3]))
 
     @patch("requests.post")
     def test_predict_with_bytes(self, mock_post):

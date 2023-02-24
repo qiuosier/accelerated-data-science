@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 """Unit tests for model frameworks. Includes tests for:
@@ -61,13 +61,80 @@ class TestSklearnModel:
         data = {
             "survived": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0],
             "pass_class": [1, 3, 1, 1, 1, 2, 2, 3, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
-            "sex": ["x", "y", "y", "x", "y", "x", "x", "x", "y", "y", "x", "x", "x", "x", "x", "y", "x", "x", "x", "y"],
-            "age": [15, 63, 32, np.nan, 56, 82, 28, 38, 40, 34, 32, 22, 9, 37, 48, 52, 50, 44, 3, 28],
+            "sex": [
+                "x",
+                "y",
+                "y",
+                "x",
+                "y",
+                "x",
+                "x",
+                "x",
+                "y",
+                "y",
+                "x",
+                "x",
+                "x",
+                "x",
+                "x",
+                "y",
+                "x",
+                "x",
+                "x",
+                "y",
+            ],
+            "age": [
+                15,
+                63,
+                32,
+                np.nan,
+                56,
+                82,
+                28,
+                38,
+                40,
+                34,
+                32,
+                22,
+                9,
+                37,
+                48,
+                52,
+                50,
+                44,
+                3,
+                28,
+            ],
             "fare": 100 * np.random.rand(20) + 10,
-            "embarked": ["s", "s", "q", "s", "c", "q", "s", "c", "q", "s", "c", "s", "q", "s", "s", "c", "c", "q", "s", "q"],
+            "embarked": [
+                "s",
+                "s",
+                "q",
+                "s",
+                "c",
+                "q",
+                "s",
+                "c",
+                "q",
+                "s",
+                "c",
+                "s",
+                "q",
+                "s",
+                "s",
+                "c",
+                "c",
+                "q",
+                "s",
+                "q",
+            ],
         }
         df = pd.DataFrame(data=data)
-        X = df.drop(columns=["survived",])
+        X = df.drop(
+            columns=[
+                "survived",
+            ]
+        )
         y = df["survived"]
         cls.X_train, cls.X_test, cls.y_train, cls.y_test = train_test_split(
             X, y, test_size=0.2
