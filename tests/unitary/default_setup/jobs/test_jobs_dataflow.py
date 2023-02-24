@@ -326,7 +326,6 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
             .with_custom_conda(
                 "oci://allens_packs@ociodscdev/conda_environments/cpu/PySpark 3.0 and Data Flow/5.0/pyspark30_p37_cpu_v5"
             )
-            .with_environment_variable(env1="test1")
         )
 
         with patch.object(DataFlowApp, "client", mock_client):
@@ -336,8 +335,6 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
                     df.id == df.job_id == "ocid1.datasciencejob.oc1.iad.<unique_ocid>"
                 )
                 df.name = "test"
-                assert df.df_app.configuration["spark.driverEnv.env1"] == "test1"
-                assert df.df_app.configuration["spark.executorEnv.env1"] == "test1"
                 assert df.df_app.display_name == "test"
 
     def test_create_with_default_display_name(

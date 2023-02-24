@@ -7,7 +7,8 @@
 """
 Contains tests for ads.evaluations.evaluator
 """
-import pytest
+import numpy as np
+import pandas as pd
 import unittest
 
 from ads.evaluations.evaluator import ADSEvaluator
@@ -16,16 +17,10 @@ from ads.dataset.factory import DatasetFactory
 from ads.common.data import ADSData
 from ads.common.model import ADSModel
 from sklearn import linear_model
-from tests.ads_unit_tests.utils import get_test_dataset_path
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.datasets import load_iris
-
-#
-# run with:
-#  python -m pytest -v -p no:warnings --cov-config=.coveragerc --cov=./ --cov-report html /home/datascience/advanced-ds/tests/unitary/test_evaluations_evaluator.py
-#
 
 
 class EvaluationMetricsTest(unittest.TestCase):
@@ -118,9 +113,17 @@ class EvaluationMetricsTest(unittest.TestCase):
         assert isinstance(multi_evaluator.metrics, ADSEvaluator.EvaluationMetrics)
 
     def test_auc_against_sklearn(self):
+        data = {
+            "col1": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            "col2": np.random.randint(10, size=20),
+            "col3": np.random.default_rng().uniform(low=1, high=100, size=20),
+            "col4": 100 * np.random.rand(20) + 10,
+            "target": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0]
+        }
+        df = pd.DataFrame(data=data)
         binary_fk = DatasetFactory.open(
-            get_test_dataset_path("vor_pima-indians-diabetes.csv"), target="target"
-        ).sample(frac=0.3)
+            df, target="target"
+        )
 
         train, test = binary_fk.train_test_split(test_size=0.15)
         X_train = train.X.values

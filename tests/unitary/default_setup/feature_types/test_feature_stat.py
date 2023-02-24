@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sklearn.datasets import load_iris
+
 from ads.feature_engineering.feature_type_manager import (
     FeatureTypeManager as feature_type_manager,
 )
@@ -301,10 +303,6 @@ class TestFeatureStat:
         assert stat.loc[stat["Metric"] == "missing"]["Value"].iloc[0] == 2
 
     def test_dataframe_stat(self):
-        curr_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(
-            curr_dir, "../../..", "vor_datasets", "vor_titanic.csv"
-        )
-        df = pd.read_csv(file_path)
+        df = load_iris(as_frame=True).data
         stat = df.ads.feature_stat()
         assert set(df.columns).issubset(set(stat.reset_index().Column.unique()))

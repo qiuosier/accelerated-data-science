@@ -61,7 +61,7 @@ class TestLocalPipelineBackend:
                     "kind": "dataScienceJob",
                     "spec": {
                         "description": "A job step",
-                        "jobId": "ocid1.datasciencejob.oc1.phx.foo",
+                        "jobId": "ocid1.datasciencejob.oc1.iad.<unique_ocid>",
                         "name": "job_step",
                     },
                 }

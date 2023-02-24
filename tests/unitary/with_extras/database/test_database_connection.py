@@ -30,7 +30,7 @@ class TestDatabaseConnection:
     key = "Testing"
     default_repository_path = os.path.join(os.path.expanduser("~"), ".database")
     fake_repo_path = "/tmp/nonexistent_path"
-    secret_id = "ocid1.vaultsecret.oc1.iad.unittestid"
+    secret_id = "ocid1.vault.oc1.<unique_ocid>"
     wallet_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "../../../data/test_Wallet_DB202103311218.zip",

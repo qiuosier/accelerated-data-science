@@ -26,7 +26,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from tests.ads_unit_tests.utils import get_test_dataset_path
 from ads.model.extractor.tensorflow_extractor import TensorflowExtractor
 from ads.model.extractor.pytorch_extractor import PytorchExtractor
 
@@ -81,10 +80,10 @@ class TestModelInfoExtractor(unittest.TestCase):
         assert json.dumps(metadata_taxonomy["Hyperparameters"]) != ""
 
     def test_ADS_sklearn_model(self):
-        oracle_fraud_dataset = pd.read_csv(
-            get_test_dataset_path("vor_oracle_fraud_dataset_5k.csv")
-        )
-        ds = DatasetFactory.open(oracle_fraud_dataset, target="anomalous")
+        from sklearn.datasets import load_iris
+        df = load_iris(as_frame=True).data
+        df["target"] = load_iris(as_frame=True).target
+        ds = DatasetFactory.open(df, target="target")
         transformed_ds = ds.auto_transform(fix_imbalance=False)
         train, test = transformed_ds.train_test_split(test_size=0.15)
         rf_clf = RandomForestClassifier(n_estimators=10).fit(
@@ -119,14 +118,8 @@ class TestModelInfoExtractor(unittest.TestCase):
         assert json.dumps(metadata_taxonomy["Hyperparameters"]) != ""
 
     def test_generic_lightgbm_model(self):
-        titanic_dataset = pd.read_csv(get_test_dataset_path("vor_titanic.csv"))
-        # Declare feature vector and target variable
-        X = titanic_dataset[["Pclass", "Age", "Fare"]]
-        y = titanic_dataset["Survived"]
-        # split the dataset into the training set and test set
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.3, random_state=0
-        )
+        from sklearn.datasets import load_iris
+        X_train, y_train = load_iris(return_X_y=True)
         clf = lgb.LGBMClassifier()
         clf.fit(X_train, y_train)
 

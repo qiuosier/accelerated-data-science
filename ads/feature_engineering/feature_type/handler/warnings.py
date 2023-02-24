@@ -88,13 +88,13 @@ def high_cardinality_handler(s: pd.Series) -> pd.DataFrame:
             "count",
             num_unique,
         ]
-    elif num_unique == len(s):
-        df.loc[0] = [
-            "high-cardinality",
-            f"every value is distinct",
-            "count",
-            num_unique,
-        ]
+        if num_unique == len(s):
+            df.loc[0] = [
+                "high-cardinality",
+                f"every value is distinct",
+                "count",
+                num_unique,
+            ]
     return df
 
 

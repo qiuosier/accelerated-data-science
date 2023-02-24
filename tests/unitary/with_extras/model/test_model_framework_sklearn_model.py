@@ -32,7 +32,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from tests.ads_unit_tests.utils import get_test_dataset_path
 from xgboost import XGBClassifier
 import sys, mock
 
@@ -58,31 +57,29 @@ class TestSklearnModel:
         model.fit(cls.X_train_iris, cls.y_train_iris)
         cls.sklearn_model = SklearnModel(model, tmp_model_dir)
 
-        # Generate a pipeline with ColumnTransformer using Titanic dataset
-        titanic = pd.read_csv(get_test_dataset_path("vor_titanic.csv"))
-        X = titanic.drop(
-            columns=[
-                "Survived",
-                "PassengerId",
-                "Name",
-                "SibSp",
-                "Parch",
-                "Ticket",
-                "Cabin",
-            ]
-        )
-        y = titanic["Survived"]
+        # Generate a pipeline with ColumnTransformer
+        data = {
+            "survived": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0],
+            "pass_class": [1, 3, 1, 1, 1, 2, 2, 3, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
+            "sex": ["x", "y", "y", "x", "y", "x", "x", "x", "y", "y", "x", "x", "x", "x", "x", "y", "x", "x", "x", "y"],
+            "age": [15, 63, 32, np.nan, 56, 82, 28, 38, 40, 34, 32, 22, 9, 37, 48, 52, 50, 44, 3, 28],
+            "fare": 100 * np.random.rand(20) + 10,
+            "embarked": ["s", "s", "q", "s", "c", "q", "s", "c", "q", "s", "c", "s", "q", "s", "s", "c", "c", "q", "s", "q"],
+        }
+        df = pd.DataFrame(data=data)
+        X = df.drop(columns=["survived",])
+        y = df["survived"]
         cls.X_train, cls.X_test, cls.y_train, cls.y_test = train_test_split(
             X, y, test_size=0.2
         )
-        cls.numeric_features = ["Age", "Fare"]
+        cls.numeric_features = ["age", "fare"]
         numeric_transformer = Pipeline(
             steps=[
                 ("imputer", SimpleImputer(strategy="median")),
                 ("scaler", StandardScaler()),
             ]
         )
-        categorical_features = ["Embarked", "Sex", "Pclass"]
+        categorical_features = ["embarked", "sex", "pass_class"]
         categorical_transformer = Pipeline(
             steps=[("onehot", OneHotEncoder(handle_unknown="ignore"))]
         )
@@ -238,7 +235,7 @@ class TestSklearnModel:
                 t = StringTensorType([None, 1])
             initial_inputs.append((k, t))
         self.sklearn_pipeline_model.serialize_model(
-            as_onnx=True, initial_types=initial_inputs
+            as_onnx=True, initial_types=initial_inputs, force_overwrite=True
         )
         target_path = os.path.join(tmp_model_dir, "test_pipeline.onnx")
         assert os.path.exists(target_path)
@@ -247,10 +244,6 @@ class TestSklearnModel:
         inputs = {}
         for c in self.X_test.columns:
             inputs[c] = self.X_test[c].values
-        for c in self.numeric_features:
-            inputs[c] = inputs[c].astype(np.float32)
-        for k in inputs:
-            inputs[k] = inputs[k].reshape((inputs[k].shape[0], 1))
         for c in self.numeric_features:
             inputs[c] = inputs[c].astype(np.float32)
         for k in inputs:

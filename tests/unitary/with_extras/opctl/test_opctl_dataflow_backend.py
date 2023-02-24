@@ -46,13 +46,13 @@ class TestDataFlowBackend:
                     "archive": "archive.zip",
                 },
                 "infrastructure": {
-                    "compartment_id": "ocid1.compartment.oc1..aaaaaaaapvb3hearqum6wjvlcpzm5ptfxqa7xfftpth4h72xx46ygavkqteq",
+                    "compartment_id": "ocid1.compartment.oc1..<unique_ocid>",
                     "driver_shape": "VM.Standard2.1",
                     "executor_shape": "VM.Standard2.1",
-                    "logs_bucket_uri": "oci://jize-dev@ociodscdev/",
+                    "logs_bucket_uri": "oci://test_bucket@test_namespace/",
                     "configurations": json.dumps({"spark.driver.memory": "512m"}),
-                    "script_bucket": "oci://jize-dev2@ociodscdev/test-dataflow/",
-                    "archive_bucket": "oci://jize-dev2@ociodscdev/test-dataflow/",
+                    "script_bucket": "oci://test_bucket@test_namespace/test-dataflow/",
+                    "archive_bucket": "oci://test_bucket@test_namespace/test-dataflow/",
                 },
             }
 
@@ -61,11 +61,11 @@ class TestDataFlowBackend:
             job_run.assert_called()
             file_upload.assert_any_call(
                 os.path.join(td, "src", "main.py"),
-                "oci://jize-dev2@ociodscdev/test-dataflow/",
+                "oci://test_bucket@test_namespace/test-dataflow/",
                 False,
             )
             file_upload.assert_any_call(
                 "archive.zip",
-                "oci://jize-dev2@ociodscdev/test-dataflow/",
+                "oci://test_bucket@test_namespace/test-dataflow/",
                 False,
             )

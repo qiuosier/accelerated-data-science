@@ -10,25 +10,27 @@ import random
 import shutil
 import sys
 import tempfile
-from unittest.mock import patch
+from datetime import datetime
+from unittest.mock import MagicMock, patch
 
-import ads
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+
+import ads
 from ads.common import utils
-from ads.common.auth import AuthType, AuthState
+from ads.common.auth import AuthState, AuthType
 from ads.common.utils import (
     JsonConverter,
     copy_file,
     copy_from_uri,
+    extract_region,
     folder_size,
     human_size,
     remove_file,
 )
-from datetime import datetime
-from sklearn import datasets
-from sklearn.model_selection import train_test_split
 
 DEFAULT_SIGNER_CONF = {"config": {}}
 
@@ -132,14 +134,14 @@ class TestCommonUtils:
             "n",
             "g",
         ]
-        df = pd.read_csv(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../../vor_datasets/vor_titanic.csv",
-            )
-        )
-        the_x = df["Sex"]
-        the_y = df["Survived"]
+        data = {
+            "col2": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0],
+            "col5": ["x", "y", "y", "x", "y", "x", "x", "x", "y", "y", "x", "x", "x", "x", "x", "y", "x", "x", "x",
+                     "y"],
+        }
+        df = pd.DataFrame(data=data)
+        the_x = df["col5"]
+        the_y = df["col2"]
         X_train, X_test, y_train, y_test = utils.split_data(
             the_x, the_y, random_state=42, test_size=0.2
         )
@@ -190,9 +192,10 @@ class TestCommonUtils:
             shutil.rmtree(self.tmp_model_dir)
         os.makedirs(self.tmp_model_dir)
 
+        from sklearn.ensemble import RandomForestClassifier
+
         from ads.common.model import ADSModel
         from ads.dataset.dataset_browser import DatasetBrowser
-        from sklearn.ensemble import RandomForestClassifier
 
         iris = datasets.load_iris(as_frame=True)
         X, y = iris["data"], iris["target"]
@@ -430,3 +433,44 @@ class TestCommonUtils:
             datetime.strptime(generated_random_name[-19:], "%Y-%m-%d-%H:%M.%S")
         except ValueError:
             assert False
+
+    @pytest.mark.parametrize(
+        "input_params, expected_result",
+        [
+            (
+                {"auth": None},
+                "default_signer_region",
+            ),
+            (
+                {
+                    "auth": {"config": {}, "signer": MagicMock(region=None)},
+                },
+                "region_from_metadata",
+            ),
+            (
+                {
+                    "auth": {
+                        "config": {"region": "config_region"},
+                        "signer": MagicMock(),
+                    },
+                },
+                "config_region",
+            ),
+            (
+                {
+                    "auth": {"config": {}, "signer": MagicMock(region="signer_region")},
+                },
+                "signer_region",
+            ),
+        ],
+    )
+    @patch(
+        "ads.config.OCI_REGION_METADATA", '{"regionIdentifier":"region_from_metadata"}'
+    )
+    def test_extract_region(self, input_params, expected_result):
+        """Ensures that a region can be successfully extracted from the env variables or signer."""
+        with patch(
+            "ads.common.auth.default_signer",
+            return_value={"config": {"region": "default_signer_region"}},
+        ):
+            assert extract_region(input_params["auth"]) == expected_result

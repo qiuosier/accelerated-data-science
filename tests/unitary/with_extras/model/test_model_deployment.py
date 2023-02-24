@@ -17,9 +17,9 @@ from ads.model.deployment.model_deployment import (
 )
 
 OCI_LOG_DETAILS = {
-    "id": "ocid1.log.oc1.xxx.xxxx",
-    "log_group_id": "ocid1.loggroup.oc1.xxx.xxxx",
-    "compartment_id": "ocid1.compartment.oc1..xxxx",
+    "id": "ocid1.log.oc1.iad.<unique_ocid>",
+    "log_group_id": "ocid1.loggroup.oc1.iad.<unique_ocid>",
+    "compartment_id": "ocid1.compartment.oc1..<unique_ocid>",
 }
 
 

@@ -23,7 +23,6 @@ from ads.feature_engineering.accessor.mixin.utils import (
 )
 from ads.feature_engineering.feature_type.phone_number import PhoneNumber
 from ads.feature_engineering.feature_type_manager import FeatureTypeManager
-from tests.ads_unit_tests.utils import get_test_dataset_path
 
 
 class TestEDAMixin(TestCase):
@@ -32,65 +31,43 @@ class TestEDAMixin(TestCase):
         super().setUp()
         FeatureTypeManager.feature_type_reset()
 
-    df = pd.read_csv(get_test_dataset_path("vor_titanic.csv"))
-    continuous_cols = ["PassengerId", "Pclass", "Age", "SibSp", "Parch", "Fare"]
-    categorical_cols = ["Cabin", "Embarked", "Name", "Sex", "Survived", "Ticket"]
+    data = {
+        "id": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        "survived": [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0],
+        "pass_class": [1, 3, 1, 1, 1, 2, 2, 3, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3],
+        "name": ["ad fb", "tde", "uf di", "kl", "tfdfr", "uy", "iuf df", "mi", "uhky", "pa", "pkjp", "wsdfe", "ifffi",
+                 "btqq", "gg", "tdfsl", "mn", "ldfro", "qajk", "kkby"],
+        "sex": ["x", "y", "y", "x", "y", "x", "x", "x", "y", "y", "x", "x", "x", "x", "x", "y", "x", "x", "x", "y"],
+        "age": [15, 63, 32, 25, 56, 82, 28, 38, 40, 34, 32, 22, 9, 37, 48, 52, 50, 44, 3, 28],
+        "siblings": np.random.randint(10, size=20),
+        "fare": 100 * np.random.rand(20) + 10,
+        "cabin": ["NaN", "NaN", "M89", "NaN", "O99", "NaN", "G77 S34", "S345", "NaN", "NaN", "NaN", "NaN", "L8", "NaN",
+                  "NaN", "NaN", "NaN", "NaN", "NaN", "NaN"],
+    }
+    df = pd.DataFrame(data=data)
+    continuous_cols = ["id", "pass_class", "age", "siblings", "fare"]
+    categorical_cols = ["survived", "name", "sex", "cabin"]
 
-    df_weather = pd.read_csv(get_test_dataset_path("vor_delhi_weather.csv"))
-    continuous_cols_weather = [
-        " _dewptm",
-        " _heatindexm",
-        " _hum",
-        " _pressurem",
-        " _tempm",
-        " _vism",
-        " _wdird",
-        " _wspdm",
-    ]
-    categorical_cols_weather = [
-        " _conds",
-        " _fog",
-        " _hail",
-        " _rain",
-        " _thunder",
-        " _tornado",
-        " _wdire",
-    ]
+    cols_tuples = [("a", "b"), ("a", "c")]
+    corr_list = [1, 2]
 
-    def test_cont_vs_cont_titanic(self):
+    def test_cont_vs_cont(self):
         df = cont_vs_cont(self.df[self.continuous_cols])
         for col in self.continuous_cols:
             assert (
                 (df["Column 1"] == col) & (df["Column 2"] == col) & (df["Value"] == 1.0)
             ).any()
         assert (
-            (df["Column 1"] == "PassengerId")
-            & (df["Column 2"] == "Pclass")
-            & (df["Value"] == -0.0351)
+            (df["Column 1"] == "id")
+            & (df["Column 2"] == "pass_class")
+            & (df["Value"] == 0.6764)
         ).any()
         assert (
-            (df["Column 1"] == "Pclass")
-            & (df["Column 2"] == "PassengerId")
-            & (df["Value"] == -0.0351)
+            (df["Column 1"] == "pass_class")
+            & (df["Column 2"] == "id")
+            & (df["Value"] == 0.6764)
         ).any()
-        assert not ((df["Column 1"] == "Name") & (df["Column 2"] == "Cabin")).any()
-
-    def test_cont_vs_cont_weather(self):
-        df = cont_vs_cont(self.df_weather[self.continuous_cols_weather])
-        for col in self.continuous_cols_weather:
-            assert (
-                (df["Column 1"] == col) & (df["Column 2"] == col) & (df["Value"] == 1.0)
-            ).any()
-        assert (
-            (df["Column 1"] == " _heatindexm")
-            & (df["Column 2"] == " _dewptm")
-            & (df["Value"] == 0.4476)
-        ).any()
-        assert (
-            (df["Column 1"] == " _wdird")
-            & (df["Column 2"] == " _wspdm")
-            & (df["Value"] == 0.2473)
-        ).any()
+        assert not ((df["Column 1"] == "name") & (df["Column 2"] == "cabin")).any()
 
     def test_cat_vs_cat(self):
         df = cat_vs_cat(self.df[self.categorical_cols])
@@ -99,23 +76,16 @@ class TestEDAMixin(TestCase):
                 (df["Column 1"] == col) & (df["Column 2"] == col) & (df["Value"] == 1.0)
             ).any()
         assert (
-            (df["Column 1"] == "Cabin")
-            & (df["Column 2"] == "Sex")
-            & (df["Value"] == 0.1372)
+            (df["Column 1"] == "cabin")
+            & (df["Column 2"] == "sex")
+            & (df["Value"] == 0.0669)
         ).any()
         assert (
-            (df["Column 1"] == "Sex")
-            & (df["Column 2"] == "Cabin")
-            & (df["Value"] == 0.1372)
+            (df["Column 1"] == "sex")
+            & (df["Column 2"] == "cabin")
+            & (df["Value"] == 0.0669)
         ).any()
-        assert not ((df["Column 1"] == "Name") & (df["Column 2"] == "Cabin")).any()
-
-    def test_cat_vs_cat_weather(self):
-        df = cat_vs_cat(self.df_weather[self.categorical_cols_weather])
-        for col in self.categorical_cols_weather:
-            assert (
-                (df["Column 1"] == col) & (df["Column 2"] == col) & (df["Value"] == 1.0)
-            ).any()
+        assert not ((df["Column 1"] == "name") & (df["Column 2"] == "cabin")).any()
 
     def test_cat_vs_cont(self):
         df = cat_vs_cont(self.df, self.categorical_cols, self.continuous_cols)
@@ -124,54 +94,24 @@ class TestEDAMixin(TestCase):
                 (df["Column 1"] == col) & (df["Column 2"] == col) & (df["Value"] == 1.0)
             ).any()
         assert (
-            (df["Column 1"] == "Embarked")
-            & (df["Column 2"] == "Age")
-            & (df["Value"] == 0.0423)
+            (df["Column 1"] == "survived")
+            & (df["Column 2"] == "age")
+            & (df["Value"] == 0.0420)
         ).any()
         assert (
-            (df["Column 1"] == "Age")
-            & (df["Column 2"] == "Embarked")
-            & (df["Value"] == 0.0423)
+            (df["Column 1"] == "age")
+            & (df["Column 2"] == "survived")
+            & (df["Value"] == 0.0420)
         ).any()
-        assert not ((df["Column 1"] == "Fare") & (df["Column 2"] == "Age")).any()
-
-    def test_cat_vs_cont_weather(self):
-        df = cat_vs_cont(
-            self.df_weather, self.categorical_cols_weather, self.continuous_cols_weather
-        )
-        for col in self.categorical_cols_weather + self.continuous_cols_weather:
-            assert (
-                (df["Column 1"] == col) & (df["Column 2"] == col) & (df["Value"] == 1.0)
-            ).any()
-        assert (
-            (df["Column 1"] == " _dewptm")
-            & (df["Column 2"] == " _conds")
-            & (df["Value"] == 0.4991)
-        ).any()
-        assert (
-            (df["Column 1"] == " _thunder")
-            & (df["Column 2"] == " _wspdm")
-            & (df["Value"] == 0.0426)
-        ).any()
-        assert not ((df["Column 1"] == " _wdire") & (df["Column 2"] == " _hail")).any()
+        assert not ((df["Column 1"] == "fare") & (df["Column 2"] == "age")).any()
 
     def test_correlation_value_range(self):
         for df in [
-            cat_vs_cat(self.df_weather[self.categorical_cols_weather]),
             cat_vs_cat(self.df[self.categorical_cols]),
-            cat_vs_cont(
-                self.df_weather,
-                self.categorical_cols_weather,
-                self.continuous_cols_weather,
-            ),
             cat_vs_cont(self.df, self.categorical_cols, self.continuous_cols),
-            cont_vs_cont(self.df_weather[self.continuous_cols_weather]),
             cont_vs_cont(self.df[self.continuous_cols]),
         ]:
             assert not (df["Value"] > 1).any() and not (df["Value"] < -1).any()
-
-    cols_tuples = [("a", "b"), ("a", "c")]
-    corr_list = [1, 2]
 
     def test_list_to_dataframe_nf(self):
         nf = _list_to_dataframe(self.cols_tuples, self.corr_list, True)

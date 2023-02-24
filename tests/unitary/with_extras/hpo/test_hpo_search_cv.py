@@ -22,8 +22,7 @@ from ads.hpo.search_cv import ADSTuner
 from ads.hpo.stopping_criterion import *
 from sklearn import preprocessing
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import load_iris, make_regression
-
+from sklearn.datasets import load_iris, load_breast_cancer, make_regression
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Lasso, LogisticRegression, SGDClassifier
@@ -39,10 +38,7 @@ class ADSTunerTest(unittest.TestCase):
     """Contains test cases for ads.hpo.search_cv"""
 
     iris_dataset = load_iris(return_X_y=True)
-    curr_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(curr_dir, "../../..", "vor_datasets", "vor_titanic.csv")
-    titanic_data = pd.read_csv(file_path)
-    titanic_dataset = titanic_data.drop("Survived", axis=1), titanic_data["Survived"]
+    breast_cancer_dataset = load_breast_cancer(as_frame=True).data, load_breast_cancer(as_frame=True).target
 
     @staticmethod
     def get_adstuner(
@@ -232,7 +228,7 @@ class ADSTunerTest(unittest.TestCase):
         assert len(ads_search.trials) > 0
 
     def build_pipeline(self):
-        X, y = self.titanic_dataset
+        X, y = self.breast_cancer_dataset
         y = preprocessing.LabelEncoder().fit_transform(y)
 
         X_train, X_valid, y_train, y_valid = train_test_split(

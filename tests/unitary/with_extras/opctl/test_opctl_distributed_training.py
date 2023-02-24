@@ -789,13 +789,13 @@ def test_update_config_image_test():
 
 def test_opctl_run_save_yaml():
     yaml_content = """
-  jobId: ocid1.datasciencejob.oc1.iad.xxxxx
+  jobId: "ocid1.datasciencejob.oc1.iad.<unique_ocid>"
   mainJobRunId:
-    distributed-main: ocid1.datasciencejobrun.oc1.iad.xxxxx
+    distributed-main: "ocid1.datasciencejobrun.oc1.iad.<unique_ocid>"
   otherJobRunIds:
-  - distributed-worker_0: ocid1.datasciencejobrun.oc1.iad.xxxxx
-  - distributed-worker_1: ocid1.datasciencejobrun.oc1.iad.xxxxx
-  workDir: oci://bucket@namespace/distributed
+  - distributed-worker_0: "ocid1.datasciencejobrun.oc1.iad.<unique_ocid>"
+  - distributed-worker_1: "ocid1.datasciencejobrun.oc1.iad.<unique_ocid>"
+  workDir: oci://test_bucket@test_namespace/distributed
     """
     # Test saving yaml content into a file in temporary directory.
     with tempfile.TemporaryDirectory() as tmp_dir:

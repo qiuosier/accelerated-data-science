@@ -10,10 +10,10 @@ from unittest import mock
 from ads.model.model_properties import ModelProperties
 
 mock_env_variables = {
-    "PROJECT_OCID": "test_project_id",
-    "JOB_RUN_OCID": "test_job_run_ocid",
-    "NB_SESSION_OCID": "test_nb_session_ocid",
-    "NB_SESSION_COMPARTMENT_OCID": "test_nb_session_compartment_ocid",
+    "PROJECT_OCID": "ocid1.datascienceproject.oc1.iad.<unique_ocid>",
+    "JOB_RUN_OCID": "ocid1.datasciencejobrun.oc1.iad.<unique_ocid>",
+    "NB_SESSION_OCID": "ocid1.datasciencenotebook.oc1.iad.<unique_ocid>",
+    "NB_SESSION_COMPARTMENT_OCID": "ocid1.compartment.oc1..<unique_ocid>",
 }
 
 

@@ -30,8 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8"]
-        testpath: ["tests/unitary/default_setup"]
+        python-version: ["3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v3
@@ -70,14 +69,8 @@ jobs:
           set -x # print commands that are executed
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-#          pip install -r test-requirements.txt
-#          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup/common \
-#          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
-#          --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
-#          --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
-#          --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
-#          --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
-#          --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat
+          pip install -r test-requirements.txt
+          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90
@@ -92,19 +85,7 @@ jobs:
           source /home/runner/.bashrc
           pip install setuptools
           pip install -r dev-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary \
-          --ignore=tests/unitary/default_setup/feature_types/test_default_feature_type_warnings.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_eda_feature_count.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_eda_mixin.py \
-          --ignore=tests/unitary/default_setup/feature_types/test_feature_domain_schema.py \
-          --ignore=tests/unitary/with_extras/evaluator/test_evaluations_evaluator.py \
-          --ignore=tests/unitary/with_extras/hpo/test_hpo_search_cv.py \
-          --ignore=tests/unitary/with_extras/model/test_model_framework_sklearn_model.py \
-          --ignore=tests/unitary/with_extras/model/test_model_info_extractor.py \
-          --deselect=tests/unitary/default_setup/common/test_common_utils.py::TestCommonUtils::test_common_utils \
-          --deselect=tests/unitary/default_setup/feature_types/test_feature_stat.py::TestFeatureStat::test_dataframe_stat \
-          --deselect=tests/unitary/with_extras/opctl/test_opctl_config.py::TestConfigResolver::test_resolve_image_name \
-          --deselect=tests/unitary/with_extras/test_feature_plot.py::TestFeaturePlot::test_feature_plot_return_type \
+          python -m pytest -v -p no:warnings --durations=5 tests/unitary
           --cov --cov-report=html
 
 #       Uploading test artifacts

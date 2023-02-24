@@ -7,9 +7,8 @@
 import numpy as np
 import matplotlib as mpl
 import pandas as pd
-import os
-from ads.feature_engineering.accessor.series_accessor import ADSSeriesAccessor
-from ads.feature_engineering.accessor.dataframe_accessor import ADSDataFrameAccessor
+from sklearn.datasets import load_iris
+
 from ads.feature_engineering.utils import (
     _is_float,
     _str_lat_long_to_point,
@@ -233,9 +232,7 @@ class TestFeaturePlot:
         assert isinstance(self.boolean.ads.feature_plot(), mpl.axes._axes.Axes)
 
         # Test DataFrame
-        curr_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(curr_dir, "../../", "vor_datasets", "vor_titanic.csv")
-        df = pd.read_csv(file_path)
+        df = load_iris(as_frame=True).data
         plots = df.ads.feature_plot()
         assert isinstance(plots, pd.DataFrame)
         assert set(df.columns).issubset(set(plots.reset_index().Column.unique()))

@@ -546,10 +546,10 @@ class TestRunInstance:
             ("", ""),
         ],
     )
-    @patch.object(
-        RunInstance, "_region", new_callable=PropertyMock, return_value="test_region"
-    )
-    def test_run_details_link(self, mock_region, test_template, expected_result):
+    @patch("ads.common.utils.extract_region", return_value="test_region")
+    def test_run_details_link(
+        self, mock_extract_region, test_template, expected_result
+    ):
         """Ensures that details link can be generated based on the provided template."""
         test_run_instance = RunInstance()
         test_run_instance.id = "test_id"
@@ -558,16 +558,11 @@ class TestRunInstance:
 
         test_result = test_run_instance.run_details_link
         if test_template:
-            mock_region.assert_called()
+            mock_extract_region.assert_called()
         assert test_result == expected_result
 
-    @patch.object(
-        RunInstance,
-        "_region",
-        new_callable=PropertyMock,
-        side_effect=Exception("some error"),
-    )
-    def test_run_details_link_fail(self, mock_region):
+    @patch("ads.common.utils.extract_region", side_effect=Exception("some error"))
+    def test_run_details_link_fail(self, mock_extract_region):
         """Ensures that details link returns an empty string in case of any errors in the method."""
         test_run_instance = RunInstance()
         test_result = test_run_instance.run_details_link
