@@ -19,6 +19,7 @@ import os
 import shlex
 from typing import Optional
 from urllib import parse
+from ads.common.utils import extract_region
 from ads.jobs.builders.runtimes.base import Runtime
 from ads.jobs.builders.runtimes.python_runtime import (
     CondaRuntime,
@@ -409,15 +410,7 @@ class CondaRuntimeHandler(RuntimeHandler):
     CONST_CONDA_BUCKET = "CONDA_ENV_BUCKET"
 
     def __get_auth_region(self) -> str:
-        config = self.data_science_job.dsc_job.auth.get("config")
-        signer = self.data_science_job.dsc_job.auth.get("signer")
-        if "region" in config and config["region"]:
-            region_to_use = config.get("region")
-        elif hasattr(signer, "region"):
-            region_to_use = signer.region
-        else:
-            region_to_use = None
-        return region_to_use
+        return extract_region(self.data_science_job.dsc_job.auth)
 
     def _translate_env(self, runtime: CondaRuntime) -> dict:
         """Translate the environment variable.

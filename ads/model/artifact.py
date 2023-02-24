@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
+# -*- coding: utf-8; -*-
 
 # Copyright (c) 2022, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -12,7 +12,6 @@ import shutil
 import tempfile
 import uuid
 from typing import Dict, Optional, Tuple
-
 from ads.common import auth as authutil
 from ads.common import logger, utils
 from ads.config import CONDA_BUCKET_NAME, CONDA_BUCKET_NS
@@ -20,9 +19,13 @@ from ads.model.runtime.env_info import EnvInfo, InferenceEnvInfo, TrainingEnvInf
 from ads.model.runtime.runtime_info import RuntimeInfo
 from jinja2 import Environment, PackageLoader
 import warnings
+from ads import __version__
+from datetime import datetime
 
 MODEL_ARTIFACT_VERSION = "3.0"
 REQUIRED_ARTIFACT_FILES = ("runtime.yaml", "score.py")
+SCORE_VERSION = "1.0"
+ADS_VERSION = __version__
 
 
 class ArtifactNestedFolderError(Exception):
@@ -184,10 +187,13 @@ class ModelArtifact:
         force_overwrite : (bool, optional). Defaults to False.
             Whether to overwrite existing files.
         namespace: (str, optional)
-            The namespace of region.
+            The namespace of region. Defaults to environment variable CONDA_BUCKET_NS.
         bucketname: (str, optional)
-            The bucketname of service pack.
-
+            The bucketname of service pack. Defaults to environment variable CONDA_BUCKET_NAME.
+        auth :(Dict, optional). Defaults to None.
+            The default authetication is set using `ads.set_auth` API. If you need to override the
+            default, use the `ads.common.auth.api_keys` or `ads.common.auth.resource_principal` to create appropriate
+            authentication signer and kwargs required to instantiate IdentityClient object.
 
         Raises
         ------
@@ -297,6 +303,7 @@ class ModelArtifact:
             The file name of the serialized model.
         **kwargs: (dict)
             use_torch_script: bool
+            data_deserializer: str
 
         Returns
         -------
@@ -320,10 +327,15 @@ class ModelArtifact:
         ):
             raise FileExistsError(f"{jinja_template_filename}.jinja2 does not exists.")
         scorefn_template = self._env.get_template(f"{jinja_template_filename}.jinja2")
+        time_suffix = datetime.today().strftime("%Y%m%d_%H%M%S")
+
         context = {
             "model_file_name": self.model_file_name,
-            "use_torch_script": kwargs.get("use_torch_script", False),
+            "SCORE_VERSION": SCORE_VERSION,
+            "ADS_VERSION": ADS_VERSION,
+            "time_created": time_suffix,
         }
+        context.update(kwargs)
         with open(os.path.join(self.artifact_dir, "score.py"), "w") as sfl:
             sfl.write(scorefn_template.render(context))
 

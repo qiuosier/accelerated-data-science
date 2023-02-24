@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
+# -*- coding: utf-8; -*--
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -211,9 +211,7 @@ class TestFeatureDomainSchema:
     )
 
     ### DataFrame
-    curr_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(curr_dir, "../../..", "vor_datasets", "vor_titanic.csv")
-    df = pd.read_csv(file_path)
+    df = load_iris(as_frame=True).data
 
     ### schema
     schema = Schema.from_dict(
@@ -546,25 +544,25 @@ class TestFeatureDomainSchema:
                 mock_warning.assert_called()
 
     def test_simple_constraint(self):
-        self.df["Pclass"].ads.feature_type = ["category"]
-        domain = self.df["Pclass"].ads.feature_domain()
+        self.df["sepal length (cm)"].ads.feature_type = ["category"]
+        domain = self.df["sepal length (cm)"].ads.feature_domain()
         assert isinstance(domain.constraints[0], Expression)
 
     @pytest.mark.skipif("NoDependency" in os.environ, reason="skip for dependency test")
     def test_expression(self):
-        domain = self.df["Pclass"].ads.feature_domain()
-        domain.constraints.append(Expression("$x in ['3', '1', '2']"))
-        assert domain.constraints[1].evaluate(x="'4'") is False
-        assert domain.constraints[1].evaluate(x="'1'") is True
+        domain = self.df["sepal length (cm)"].ads.feature_domain()
+        domain.constraints.append(Expression("$x < 8"))
+        assert domain.constraints[1].evaluate(x="9") is False
+        assert domain.constraints[1].evaluate(x="7") is True
 
     @pytest.mark.skipif("NoDependency" in os.environ, reason="skip for dependency test")
     def test_from_dict(self):
-        self.df["Pclass"].ads.feature_type = ["category"]
+        self.df["sepal length (cm)"].ads.feature_type = ["category"]
         schema = self.df.ads.model_schema()
         new_schema = Schema.from_dict(schema.to_dict())
 
-        assert isinstance(new_schema["Pclass"].domain.constraints[0], Expression)
-        assert new_schema["Pclass"].domain.constraints[0].evaluate(x="1")
+        assert isinstance(new_schema["sepal length (cm)"].domain.constraints[0], Expression)
+        assert new_schema["sepal length (cm)"].domain.constraints[0].evaluate(x="5.0")
 
     def teardown_method(self):
         if os.path.exists(self.dir):

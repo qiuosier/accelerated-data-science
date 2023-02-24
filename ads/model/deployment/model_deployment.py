@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 
@@ -13,14 +13,14 @@ from typing import Dict, Union, List, Any
 
 import oci.loggingsearch
 import pandas as pd
+from ads.model.common.utils import _is_json_serializable
+from ads.model.serde.model_input import JsonModelInputSERDE
 from ads.common import auth, oci_client
-from ads.common.data_serializer import InputDataSerializer
 from ads.common.oci_logging import (
     LOG_RECORDS_LIMIT,
     ConsolidatedLog,
     OCILog,
 )
-from ads.model.common.utils import _is_json_serializable
 from ads.model.deployment.common.utils import send_request
 from .common import utils
 from .common.utils import OCIClientManager, State
@@ -86,6 +86,8 @@ class ModelDeployment:
     list_workflow_logs()
         Returns a list of the steps involved in deploying a model
     """
+
+    model_input_serializer = JsonModelInputSERDE()
 
     def __init__(
         self,
@@ -375,19 +377,37 @@ class ModelDeployment:
         self,
         json_input=None,
         data: Any = None,
+        serializer: "ads.model.ModelInputSerializer" = model_input_serializer,
         auto_serialize_data: bool = False,
         **kwargs,
     ) -> dict:
-        """Returns prediction of input data run against the model deployment endpoint
+        """Returns prediction of input data run against the model deployment endpoint.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from ads.model import ModelInputSerializer
+        >>> class MySerializer(ModelInputSerializer):
+        ...     def serialize(self, data):
+        ...         serialized_data = 1
+        ...         return serialized_data
+
+        >>> prediction = model.predict(
+        ...        data=np.array([1, 2, 3]),
+        ...        serializer=MySerializer(),
+        ...        auto_serialize_data=True,
+        ... )['prediction']
 
         Parameters
         ----------
         json_input: Json serializable
-            Json payload for the prediction.
+            JSON payload for the prediction.
         data: Any
             Data for the prediction.
-        auto_serialize_data: bool.
-            Whether to auto serialize input data. Defauls to `False`.
+        serializer: ads.model.ModelInputSerializer
+            Defaults to ads.model.JsonModelInputSerializer.
+        auto_serialize_data: bool
+            Defaults to False. Indicate whether to auto serialize input data using `serializer`.
             If `auto_serialize_data=False`, `data` required to be bytes or json serializable
             and `json_input` required to be json serializable. If `auto_serialize_data` set
             to True, data will be serialized before sending to model deployment endpoint.
@@ -399,7 +419,7 @@ class ModelDeployment:
 
         Returns
         -------
-        dict
+        dict:
             Prediction results.
 
         """
@@ -421,10 +441,15 @@ class ModelDeployment:
 
         if auto_serialize_data:
             data = data or json_input
-            serialized_data = InputDataSerializer(data=data)
-            return serialized_data.send(endpoint, **header)
+            serialized_data = serializer.serialize(data=data)
+            return send_request(
+                data=serialized_data,
+                endpoint=endpoint,
+                is_json_payload=_is_json_serializable(serialized_data),
+                header=header,
+            )
 
-        elif json_input is not None:
+        if json_input is not None:
             if not _is_json_serializable(json_input):
                 raise ValueError(
                     "`json_input` must be json serializable. "
@@ -437,7 +462,12 @@ class ModelDeployment:
             )
             data = json_input
 
-        is_json_payload = True if _is_json_serializable(data) else False
+        is_json_payload = _is_json_serializable(data)
+        if not isinstance(data, bytes) and not is_json_payload:
+            raise TypeError(
+                "`data` is not bytes or json serializable. Set `auto_serialize_data` to `True` to serialize the input data."
+            )
+
         prediction = send_request(
             data=data, endpoint=endpoint, is_json_payload=is_json_payload, header=header
         )

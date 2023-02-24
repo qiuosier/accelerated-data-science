@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*--
+# -*- coding: utf-8; -*--
 
-# Copyright (c) 2022 Oracle and/or its affiliates.
+# Copyright (c) 2022, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
 
@@ -309,6 +309,7 @@ class MetadataMixin:
             use_case_type = self.metadata_taxonomy[
                 MetadataTaxonomyKeys.USE_CASE_TYPE
             ].value
+
         self._populate_metadata_taxonomy(
             model=self.estimator, use_case_type=use_case_type
         )

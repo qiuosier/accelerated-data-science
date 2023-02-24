@@ -98,7 +98,7 @@ class OCIClientMixin:
         Parameters
         ----------
         **kwargs :
-            Additional keyword arguments for initalizing the OCI client.
+            Additional keyword arguments for initializing the OCI client.
 
         Returns
         -------
@@ -116,7 +116,7 @@ class OCIClientMixin:
         client :
             The OCI client class to be initialized, e.g., oci.data_science.DataScienceClient
         **kwargs :
-            Additional keyword arguments for initalizing the OCI client.
+            Additional keyword arguments for initializing the OCI client.
 
         Returns
         -------

@@ -23,7 +23,6 @@ from ads.common.auth import default_signer
 from ads.common.oci_client import OCIClientFactory
 from ads.common.oci_mixin import OCIModelMixin
 from ads.common.utils import batch_convert_case, camel_to_snake
-from ads.config import OCI_REGION_METADATA
 from ads.jobs.builders.infrastructure.base import Infrastructure, RunInstance
 from ads.jobs.builders.infrastructure.utils import normalize_config
 from ads.jobs.builders.runtimes.python_runtime import DataFlowRuntime
@@ -838,13 +837,6 @@ class DataFlow(Infrastructure):
             runtime_config = runtime.configuration or dict()
             runtime_config.update(conda_pack_name_to_dataflow_config(conda_uri))
             runtime.with_configuration(runtime_config)
-
-        # propagate environment variables
-        runtime_config = runtime.configuration or dict()
-        runtime_config.update(
-            _env_variables_to_dataflow_config(runtime.environment_variables)
-        )
-        runtime.with_configuration(runtime_config)
 
         payload.update(
             {

@@ -4,10 +4,7 @@
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 
-import json
-
-from ads.common.auth import default_signer
-from ads.config import OCI_REGION_METADATA
+from ads.common import utils as common_utils
 from ads.jobs.builders.base import Builder
 from ads.jobs.builders.runtimes.base import Runtime
 import logging
@@ -138,16 +135,7 @@ class RunInstance:
         raise NotImplementedError()
 
     @property
-    def _region(self):
-        """Gets the current region based on the signer and env variables."""
-        signer = default_signer()
-        if "region" in signer["config"]:
-            return signer["config"]["region"]
-
-        return json.loads(OCI_REGION_METADATA)["regionIdentifier"]
-
-    @property
-    def run_details_link(self):
+    def run_details_link(self) -> str:
         """
         Link to run details page in OCI console
 
@@ -156,21 +144,17 @@ class RunInstance:
         str
             The link to the details page in OCI console.
         """
-
         if not self._DETAILS_LINK:
             return ""
 
-        result = ""
         try:
-            result = self._DETAILS_LINK.format(region=self._region, id=self.id)
-            print("-" * 10)
-            print(result)
-            print("-" * 10)
-
+            return self._DETAILS_LINK.format(
+                region=common_utils.extract_region(), id=self.id
+            )
         except Exception as ex:
             print(str(ex))
             logger.info(
                 "Error occurred in attempt to extract the link to the resource. "
                 f"Details: {ex}"
             )
-        return result
+        return ""
