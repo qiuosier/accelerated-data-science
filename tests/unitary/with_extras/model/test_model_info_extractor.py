@@ -30,7 +30,6 @@ from ads.model.extractor.huggingface_extractor import HuggingFaceExtractor
 from ads.model.extractor.model_info_extractor_factory import ModelInfoExtractorFactory
 from ads.model.extractor.pytorch_extractor import PytorchExtractor
 from ads.model.extractor.tensorflow_extractor import TensorflowExtractor
-from tests.ads_unit_tests.utils import get_test_dataset_path
 
 
 class Config:

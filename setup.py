@@ -29,7 +29,7 @@ install_requires = [
     "python_jsonschema_objects>=0.3.13",
     "PyYAML>=5.4,<6",
     "requests",
-    "scikit-learn>=0.23.2",
+    "scikit-learn>=0.23.2,<1.2",
     "tabulate>=0.8.9",
     "tqdm>=4.59.0",
     "psutil>=5.7.2",
@@ -58,7 +58,7 @@ extras_require = {
         "pandavro>=1.6.0",
         "datefinder>=0.7.1",
         "htmllistparse>=0.6.0",
-        "sqlalchemy>=1.4.1",
+        "sqlalchemy>=1.4.1, <=1.4.46",
         "oracledb>=1.0",
     ],
     "opctl": [
@@ -72,6 +72,7 @@ extras_require = {
     "mysql": ["mysql-connector-python"],
     "bds": ["ibis-framework[impala]", "hdfs[kerberos]", "sqlalchemy"],
     "spark": ["pyspark>=3.0.0"],
+    "huggingface": ["transformers"],
 }
 
 this_directory = Path(__file__).parent
