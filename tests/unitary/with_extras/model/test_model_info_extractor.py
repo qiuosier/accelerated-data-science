@@ -6,28 +6,61 @@
 import copy
 import json
 import unittest
-import copy
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
 import pytest
 import sklearn
+import transformers
 import xgboost as xgb
-from ads.common.model import ADSModel
-from ads.model.extractor.model_info_extractor_factory import ModelInfoExtractorFactory
-from ads.dataset.factory import DatasetFactory
-from unittest.mock import patch, MagicMock, PropertyMock
 from numpy import nan
 from sklearn import datasets, svm
-from sklearn.datasets import make_regression
+from sklearn.datasets import make_regression, load_iris
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from ads.model.extractor.tensorflow_extractor import TensorflowExtractor
+
+from ads.common.model import ADSModel
+from ads.dataset.factory import DatasetFactory
+from ads.model.extractor.huggingface_extractor import HuggingFaceExtractor
+from ads.model.extractor.model_info_extractor_factory import ModelInfoExtractorFactory
 from ads.model.extractor.pytorch_extractor import PytorchExtractor
+from ads.model.extractor.tensorflow_extractor import TensorflowExtractor
+from tests.ads_unit_tests.utils import get_test_dataset_path
+
+
+class Config:
+    def to_dict(self):
+        return {"hyperparameter": "value"}
+
+
+class Model:
+    config = Config()
+
+
+class FakePipeline(transformers.pipelines.base.Pipeline):
+    def __init__(self, task, model):
+        self.task = task
+        self.model = model
+
+    def __call__(self, images):
+        return {"prediction": "result"}
+
+    def _forward(self):
+        pass
+
+    def _sanitize_parameters(self):
+        pass
+
+    def postprocess(self):
+        pass
+
+    def preprocess(self):
+        pass
 
 
 class TestModelInfoExtractor(unittest.TestCase):
@@ -80,8 +113,6 @@ class TestModelInfoExtractor(unittest.TestCase):
         assert json.dumps(metadata_taxonomy["Hyperparameters"]) != ""
 
     def test_ADS_sklearn_model(self):
-        from sklearn.datasets import load_iris
-
         df = load_iris(as_frame=True).data
         df["target"] = load_iris(as_frame=True).target
         ds = DatasetFactory.open(df, target="target")
@@ -119,8 +150,6 @@ class TestModelInfoExtractor(unittest.TestCase):
         assert json.dumps(metadata_taxonomy["Hyperparameters"]) != ""
 
     def test_generic_lightgbm_model(self):
-        from sklearn.datasets import load_iris
-
         X_train, y_train = load_iris(return_X_y=True)
         clf = lgb.LGBMClassifier()
         clf.fit(X_train, y_train)
@@ -207,3 +236,15 @@ class TestModelInfoExtractor(unittest.TestCase):
         assert metadata_taxonomy["Framework"] == "pytorch"
         assert metadata_taxonomy["FrameworkVersion"] == "1.0.0"
         assert metadata_taxonomy["Algorithm"] is not None
+
+    def test_huggingface_extractors(
+        self,
+    ):
+
+        fake_pipeline = FakePipeline("fake", Model())
+        metadata_taxonomy = ModelInfoExtractorFactory.extract_info(fake_pipeline)
+        assert isinstance(metadata_taxonomy, dict)
+        assert metadata_taxonomy["Framework"] == "transformers"
+        assert metadata_taxonomy["FrameworkVersion"] == transformers.__version__
+        assert metadata_taxonomy["Algorithm"] is not None
+        assert metadata_taxonomy["Hyperparameters"] == {"hyperparameter": "value"}

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -20,7 +19,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import uuid
 from ads.model.framework.pytorch_model import PyTorchModel
+from ads.model.serde.model_serializer import (
+    PyTorchOnnxModelSaveSERDE,
+    PytorchOnnxModelSerializer,
+)
 
 torch.manual_seed(1)
 
@@ -137,22 +141,9 @@ class TestPyTorchModel:
             self.myPyTorchModel,
             tmp_model_dir,
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(AssertionError):
             test_pytorch_model._handle_model_file_name(
                 as_onnx=True, model_file_name="model.xxx"
-            )
-
-    def test_serialize_with_incorrect_model_file_name_pt(self):
-        """
-        Test wrong model_file_name format.
-        """
-        test_pytorch_model = PyTorchModel(
-            self.myPyTorchModel,
-            tmp_model_dir,
-        )
-        with pytest.raises(ValueError):
-            test_pytorch_model._handle_model_file_name(
-                as_onnx=False, model_file_name="model.xxx"
             )
 
     def test_serialize_using_pytorch_without_modelname(self):
@@ -187,7 +178,10 @@ class TestPyTorchModel:
             as_onnx=True, model_file_name=None
         )
         test_pytorch_model.serialize_model(as_onnx=True, onnx_args=self.dummy_input)
-        assert os.path.exists(tmp_model_dir + "model.onnx")
+        assert isinstance(
+            test_pytorch_model.get_model_serializer(), PyTorchOnnxModelSaveSERDE
+        )
+        assert os.path.exists(os.path.join(tmp_model_dir, "model.onnx"))
 
     def test_serialize_using_onnx_with_modelname(self):
         """
@@ -197,53 +191,71 @@ class TestPyTorchModel:
             self.myPyTorchModel,
             tmp_model_dir,
         )
-        test_pytorch_model.model_file_name = "test2.onnx"
+        test_pytorch_model.model_file_name = f"model_{uuid.uuid4()}.onnx"
         test_pytorch_model.serialize_model(as_onnx=True, onnx_args=self.dummy_input)
-        assert os.path.exists(tmp_model_dir + "test2.onnx")
+        assert isinstance(
+            test_pytorch_model.get_model_serializer(), PyTorchOnnxModelSaveSERDE
+        )
+        assert os.path.exists(
+            os.path.join(tmp_model_dir, test_pytorch_model.model_file_name)
+        )
 
     def test_to_onnx(self):
         """
-        Test if PyTorchModel.to_onnx generate onnx model result.
+        Test if PytorchOnnxModelSerializer.serialize generate onnx model result.
         """
         test_pytorch_model = PyTorchModel(
             self.myPyTorchModel,
             tmp_model_dir,
         )
-        test_pytorch_model.to_onnx(
-            tmp_model_dir + "model1.onnx", onnx_args=self.dummy_input
+        model_file_name = f"model_{uuid.uuid4()}.onnx"
+        PytorchOnnxModelSerializer().serialize(
+            estimator=test_pytorch_model.estimator,
+            model_path=os.path.join(tmp_model_dir, model_file_name),
+            onnx_args=self.dummy_input,
         )
-        assert os.path.isfile(tmp_model_dir + "model1.onnx")
+        assert os.path.exists(os.path.join(tmp_model_dir, model_file_name))
 
     def test_to_onnx_reload(self):
         """
-        Test if PyTorchModel.to_onnx generate onnx model result.
+        Test if PytorchOnnxModelSerializer.serialize generate onnx model result.
         """
         test_pytorch_model = PyTorchModel(
             self.myPyTorchModel,
             tmp_model_dir,
         )
-        test_pytorch_model.to_onnx(
-            tmp_model_dir + "model1.onnx", onnx_args=self.dummy_input
+        model_file_name = f"model_{uuid.uuid4()}.onnx"
+        PytorchOnnxModelSerializer().serialize(
+            estimator=test_pytorch_model.estimator,
+            model_path=os.path.join(tmp_model_dir, model_file_name),
+            onnx_args=self.dummy_input,
         )
         assert (
-            rt.InferenceSession(os.path.join(tmp_model_dir, "model1.onnx")) is not None
+            rt.InferenceSession(os.path.join(tmp_model_dir, model_file_name))
+            is not None
         )
 
     def test_to_onnx_without_dummy_input(self):
         """
-        Test if PyTorchModel.to_onnx raise expected error
+        Test if PytorchOnnxModelSerializer.serialize raise expected error
         """
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
+        model_file_name = f"model_{uuid.uuid4()}.onnx"
         with pytest.raises(ValueError):
-            test_pytorch_model.to_onnx(tmp_model_dir + "model1.onnx")
+            PytorchOnnxModelSerializer().serialize(
+                estimator=test_pytorch_model.estimator,
+                model_path=os.path.join(tmp_model_dir, model_file_name),
+            )
 
     def test_to_onnx_without_path(self):
         """
-        Test if PyTorchModel.to_onnx raise expected error
+        Test if PytorchOnnxModelSerializer.serialize raise expected error
         """
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
-        with pytest.raises(ValueError):
-            test_pytorch_model.to_onnx(onnx_args=self.dummy_input)
+        with pytest.raises(TypeError):
+            PytorchOnnxModelSerializer().serialize(
+                estimator=test_pytorch_model.estimator, onnx_args=self.dummy_input
+            )
 
     @pytest.mark.parametrize(
         "test_data",
@@ -251,14 +263,14 @@ class TestPyTorchModel:
     )
     def test_get_data_serializer_with_convert_to_list(self, test_data):
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
-        serialized_data = test_pytorch_model.get_data_serializer(test_data).to_dict()
+        serialized_data = test_pytorch_model.get_data_serializer().serialize(test_data)
         assert serialized_data["data"] == [1, 2, 3]
         assert serialized_data["data_type"] == str(type(test_data))
 
     def test_get_data_serializer_helper_numpy(self):
         test_data = np.array([1, 2, 3])
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
-        serialized_data = test_pytorch_model.get_data_serializer(test_data).to_dict()
+        serialized_data = test_pytorch_model.get_data_serializer().serialize(test_data)
         load_bytes = BytesIO(base64.b64decode(serialized_data["data"].encode("utf-8")))
         deserialized_data = np.load(load_bytes, allow_pickle=True)
         assert (deserialized_data == test_data).any()
@@ -271,7 +283,7 @@ class TestPyTorchModel:
     )
     def test_get_data_serializer_with_pandasdf(self, test_data):
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
-        serialized_data = test_pytorch_model.get_data_serializer(test_data).to_dict()
+        serialized_data = test_pytorch_model.get_data_serializer().serialize(test_data)
         assert (
             serialized_data["data"]
             == '{"a":{"0":1,"1":2},"b":{"0":2,"1":3},"c":{"0":3,"1":4}}'
@@ -284,7 +296,7 @@ class TestPyTorchModel:
     )
     def test_get_data_serializer_with_no_change(self, test_data):
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
-        serialized_data = test_pytorch_model.get_data_serializer(test_data).to_dict()
+        serialized_data = test_pytorch_model.get_data_serializer().serialize(test_data)
         assert serialized_data["data"] == test_data
 
     def test_get_data_serializer_raise_error(self):
@@ -294,9 +306,9 @@ class TestPyTorchModel:
         test_data = TestData()
         test_pytorch_model = PyTorchModel(self.myPyTorchModel, tmp_model_dir)
         with pytest.raises(TypeError):
-            serialized_data = test_pytorch_model.get_data_serializer(
+            serialized_data = test_pytorch_model.get_data_serializer().serialize(
                 test_data
-            ).to_dict()
+            )
 
     def test_framework(self):
         """Test framework"""

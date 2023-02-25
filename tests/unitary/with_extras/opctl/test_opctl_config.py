@@ -236,8 +236,7 @@ class TestConfigResolver:
         )
 
     @pytest.mark.skip(
-        "This test is doing api call to oci, it is not a unit test."
-        "Has to be mocked or moved to 'integration' tests folder"
+        "This test is doing api call to oci, has to be mocked or moved to 'integration' tests folder."
     )
     def test_resolve_image_name(self):
         config = {

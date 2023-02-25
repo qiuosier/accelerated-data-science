@@ -8,14 +8,10 @@
 from copy import copy
 from unittest import TestCase
 import pandas as pd
-from ads.feature_engineering.accessor.dataframe_accessor import ADSDataFrameAccessor
-from ads.feature_engineering.accessor.series_accessor import ADSSeriesAccessor
+
 from ads.feature_engineering.feature_type.base import FeatureType
 from ads.feature_engineering.feature_type.string import String
 from ads.feature_engineering.feature_type_manager import FeatureTypeManager
-import mock
-import sys
-import pytest
 
 
 def zeros_warning_handler(x):

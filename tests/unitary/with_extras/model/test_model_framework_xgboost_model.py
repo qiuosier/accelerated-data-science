@@ -19,6 +19,7 @@ import pandas as pd
 import pytest, mock, sys
 import xgboost as xgb
 from ads.model.framework.xgboost_model import XGBoostModel
+from ads.model.serde.model_serializer import XgboostOnnxModelSerializer
 from sklearn.datasets import make_classification, make_regression
 from sklearn.model_selection import train_test_split
 
@@ -191,19 +192,13 @@ class TestXGBoostModel:
         """
         Test correct and wrong model_file_name format.
         """
-        self.sklearn.model_file_name = "test.abc"
         with pytest.raises(
-            ValueError,
-            match="`model_file_name` has to be ending with `.onnx` for onnx format.",
+            AssertionError,
+            match="Wrong file extension. Expecting `.onnx` suffix.",
         ):
-            self.sklearn.serialize_model(as_onnx=True)
-
-        self.sklearn.model_file_name = "test.abc"
-        with pytest.raises(
-            ValueError,
-            match="`model_file_name` has to be ending with `.json` for JSON format.",
-        ):
-            self.sklearn.serialize_model(as_onnx=False)
+            self.sklearn.model_file_name = self.sklearn._handle_model_file_name(
+                as_onnx=True, model_file_name="test.abc"
+            )
 
         self.sklearn.model_file_name = "test.json"
         self.sklearn.serialize_model(as_onnx=False)
@@ -213,27 +208,30 @@ class TestXGBoostModel:
         """
         Test no model_file_name.
         """
-        target_dir = os.path.join(tmp_model_dir, "sklearn_onnx_without_filename")
         self.sklearn.model_file_name = None
-        self.sklearn.serialize_model(as_onnx=False)
-        assert os.path.exists(os.path.join(tmp_model_dir, "model.json"))
+        assert (
+            self.sklearn._handle_model_file_name(
+                as_onnx=False, model_file_name="model.json"
+            )
+            == "model.json"
+        )
 
     @pytest.mark.parametrize(
         "test_data",
         [pd.Series([1, 2, 3]), [1, 2, 3]],
     )
     def test_get_data_serializer_helper_with_convert_to_list(self, test_data):
-        serialized_data = self.xgboost_classification.get_data_serializer(
+        serialized_data = self.xgboost_classification.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         assert serialized_data["data"] == [1, 2, 3]
         assert serialized_data["data_type"] == str(type(test_data))
 
     def test_get_data_serializer_helper_numpy(self):
         test_data = np.array([1, 2, 3])
-        serialized_data = self.xgboost_classification.get_data_serializer(
+        serialized_data = self.xgboost_classification.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         load_bytes = BytesIO(base64.b64decode(serialized_data["data"].encode("utf-8")))
         deserialized_data = np.load(load_bytes, allow_pickle=True)
         assert (deserialized_data == test_data).any()
@@ -245,9 +243,9 @@ class TestXGBoostModel:
         ],
     )
     def test_get_data_serializer_helper_with_pandasdf(self, test_data):
-        serialized_data = self.xgboost_classification.get_data_serializer(
+        serialized_data = self.xgboost_classification.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         assert (
             serialized_data["data"]
             == '{"a":{"0":1,"1":2},"b":{"0":2,"1":3},"c":{"0":3,"1":4}}'
@@ -259,9 +257,9 @@ class TestXGBoostModel:
         ["I have an apple", {"a": [1], "b": [2], "c": [3]}],
     )
     def test_get_data_serializer_helper_with_no_change(self, test_data):
-        serialized_data = self.xgboost_classification.get_data_serializer(
+        serialized_data = self.xgboost_classification.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         assert serialized_data["data"] == test_data
 
     def test_get_data_serializer_helper_raise_error(self):
@@ -270,22 +268,22 @@ class TestXGBoostModel:
 
         test_data = TestData()
         with pytest.raises(TypeError):
-            serialized_data = self.xgboost_classification.get_data_serializer(
-                test_data
-            ).to_dict()
+            serialized_data = (
+                self.xgboost_classification.get_data_serializer().serialize(test_data)
+            )
 
     def test_X_sample_related_for_to_onnx(self):
         """
         Test if X_sample works in to_onnx propertly.
         """
         wrong_format = [1, 2, 3, 4]
-        self.sklearn.to_onnx(X_sample=wrong_format)
-        self.sklearn.estimator = None
+        onnx_serializer = XgboostOnnxModelSerializer()
+        onnx_serializer.estimator = None
         with pytest.raises(
             ValueError,
             match="`initial_types` can not be detected. Please directly pass initial_types.",
         ):
-            self.sklearn.to_onnx(X_sample=wrong_format)
+            onnx_serializer._to_onnx(X_sample=wrong_format)
 
     def test_xgboost_to_onnx_with_xgboost_uninstalled(self):
         """

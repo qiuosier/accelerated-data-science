@@ -38,7 +38,9 @@ SAMPLE_PAYLOAD = dict(
     compartment_id="ocid1.compartment.oc1..<unique_ocid>",
     display_name="test-df",
     driver_shape="VM.Standard2.1",
+    driver_shape_config={"memory_in_gbs": 1, "ocpus": 16},
     executor_shape="VM.Standard2.1",
+    executor_shape_config={"memory_in_gbs": 1, "ocpus": 16},
     file_uri="oci://test_bucket@test_namespace/test-dataflow/test-dataflow.py",
     num_executors=1,
     spark_version="3.2.1",
@@ -122,7 +124,7 @@ class TestDataFlowApp:
                     df.lifecycle_state
                     == oci.data_flow.models.Application.LIFECYCLE_STATE_DELETED
                 )
-                assert len(df.to_yaml()) == 451
+                assert len(df.to_yaml()) == 557
 
     def test_create_df_app_with_default_display_name(
         self,
@@ -302,8 +304,16 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
             df = DataFlow()
             df.with_compartment_id(SAMPLE_PAYLOAD["compartment_id"]).with_configuration(
                 {"spark.app.name": "My App Name", "spark.shuffle.io.maxRetries": "4"}
-            ).with_driver_shape(SAMPLE_PAYLOAD["driver_shape"]).with_executor_shape(
+            ).with_driver_shape(
+                SAMPLE_PAYLOAD["driver_shape"]
+            ).with_driver_shape_config(
+                memory_in_gbs=SAMPLE_PAYLOAD["driver_shape_config"]["memory_in_gbs"],
+                ocpus=SAMPLE_PAYLOAD["driver_shape_config"]["ocpus"],
+            ).with_executor_shape(
                 SAMPLE_PAYLOAD["executor_shape"]
+            ).with_executor_shape_config(
+                memory_in_gbs=SAMPLE_PAYLOAD["executor_shape_config"]["memory_in_gbs"],
+                ocpus=SAMPLE_PAYLOAD["executor_shape_config"]["ocpus"],
             ).with_logs_bucket_uri(
                 SAMPLE_PAYLOAD["logs_bucket_uri"]
             ).with_num_executors(
@@ -415,6 +425,8 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
         assert df_dict["spec"]["driverShape"] == "VM.Standard2.1"
         assert df_dict["spec"]["logsBucketUri"] == "oci://test_bucket@test_namespace/"
         assert df_dict["spec"]["privateEndpointId"] == "test_private_endpoint"
+        assert df_dict["spec"]["driverShapeConfig"] == {"memoryInGBs": 1, "ocpus": 16}
+        assert df_dict["spec"]["executorShapeConfig"] == {"memoryInGBs": 1, "ocpus": 16}
 
         df_dict["spec"].pop("language")
         df_dict["spec"].pop("numExecutors")

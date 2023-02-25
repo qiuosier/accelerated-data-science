@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -7,23 +6,13 @@
 """Unit tests for model frameworks. Includes tests for:
  - SparkPipelineModel
 """
-import base64
 import os
 import shutil
 import tempfile
-from io import BytesIO
-from packaging import version
-
-import pandas as pd
 import pytest
-import time
 import numpy as np
-
-from ads.model.generic_model import GenericModel
+from packaging import version
 from ads.model.framework.spark_model import SparkPipelineModel
-
-from oci.exceptions import ServiceError
-
 from pyspark.ml.linalg import Vectors
 from pyspark.ml.pipeline import Pipeline, PipelineModel
 from pyspark.sql import SparkSession
@@ -173,7 +162,7 @@ class TestSparkPipelineModel:
             X_sample=test,
             y_sample=pred,
         )
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(AttributeError):
             model.prepare(
                 inference_conda_env=self.inference_conda_env,
                 model_file_name=self.model_file_name,

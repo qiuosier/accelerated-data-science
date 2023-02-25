@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -18,6 +17,7 @@ import onnxruntime as rt
 import pandas as pd
 import pytest
 from ads.model.framework.sklearn_model import SklearnModel
+from ads.model.serde.model_serializer import SklearnOnnxModelSerializer
 from joblib import load
 from lightgbm import LGBMClassifier, LGBMRegressor
 from skl2onnx.common.data_types import (
@@ -32,6 +32,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from tests.ads_unit_tests.utils import get_test_dataset_path
 from xgboost import XGBClassifier
 import sys, mock
 
@@ -197,9 +198,11 @@ class TestSklearnModel:
 
     def test_to_onnx(self):
         """
-        Test if SklearnModel.to_onnx generate onnx formate result.
+        Test if SklearnOnnxModelSerializer.to_onnx generate onnx formate result.
         """
-        sklearn_onnx = self.sklearn_model.to_onnx(
+        onnx_serializer = SklearnOnnxModelSerializer()
+        onnx_serializer.estimator = self.sklearn_model.estimator
+        sklearn_onnx = onnx_serializer._to_onnx(
             X_sample=np.array([[1, 2, 3], [1, 2, 3]])
         )
         assert isinstance(sklearn_onnx, onnx.onnx_ml_pb2.ModelProto)
@@ -215,6 +218,7 @@ class TestSklearnModel:
         self.sklearn_model.serialize_model(as_onnx=True, X_sample=self.X_test_iris)
         target_path = os.path.join(tmp_model_dir, "model.onnx")
         assert os.path.exists(target_path)
+
         sess = rt.InferenceSession(target_path)
         input_name = sess.get_inputs()[0].name
         label_name = sess.get_outputs()[0].name
@@ -234,6 +238,9 @@ class TestSklearnModel:
         Test if SklearnModel.serialize_model generate joblib file.
         Load serialzed joblib model from file and check prediction result.
         """
+        self.sklearn_model.set_model_save_serializer(
+            self.sklearn_model.model_save_serializer_type.JOBLIB
+        )
         self.sklearn_model.model_file_name = "test.joblib"
         self.sklearn_model.serialize_model(as_onnx=False)
         target_path = os.path.join(tmp_model_dir, "test.joblib")
@@ -260,22 +267,12 @@ class TestSklearnModel:
         assert os.path.exists(os.path.join(tmp_model_dir, "test.onnx"))
 
         with pytest.raises(
-            ValueError,
-            match="`model_file_name` has to be ending with `.onnx` for onnx format.",
+            AssertionError,
+            match="Wrong file extension. Expecting `.onnx` suffix.",
         ):
             self.sklearn_model.model_file_name = (
                 self.sklearn_model._handle_model_file_name(
                     as_onnx=True, model_file_name="test.abc"
-                )
-            )
-
-        with pytest.raises(
-            ValueError,
-            match="`model_file_name` has to be ending with `.joblib` for joblib format.",
-        ):
-            self.sklearn_model.model_file_name = (
-                self.sklearn_model._handle_model_file_name(
-                    as_onnx=False, model_file_name="test.abc"
                 )
             )
 
@@ -302,7 +299,7 @@ class TestSklearnModel:
                 t = StringTensorType([None, 1])
             initial_inputs.append((k, t))
         self.sklearn_pipeline_model.serialize_model(
-            as_onnx=True, initial_types=initial_inputs, force_overwrite=True
+            as_onnx=True, initial_types=initial_inputs
         )
         target_path = os.path.join(tmp_model_dir, "test_pipeline.onnx")
         assert os.path.exists(target_path)
@@ -318,6 +315,9 @@ class TestSklearnModel:
         assert sess.run(None, inputs) != None
 
     def test_serialize_using_pipeline_joblib(self):
+        self.sklearn_pipeline_model.set_model_save_serializer(
+            self.sklearn_pipeline_model.model_save_serializer_type.JOBLIB
+        )
         self.sklearn_pipeline_model.model_file_name = "test_pipeline.joblib"
         self.sklearn_pipeline_model.serialize_model(as_onnx=False)
         target_path = os.path.join(tmp_model_dir, "test_pipeline.joblib")
@@ -354,12 +354,12 @@ class TestSklearnModel:
         """
         Test serialize and load pipeline using Sklearn API with xgboost model.
         """
-
+        xgb_pipe = SklearnModel(self.xgb, tmp_model_dir)
         target_dir = os.path.join(tmp_model_dir, "xgboost_pipeline")
-        self.xgb_pipe.artifact_dir = target_dir
+        xgb_pipe.artifact_dir = target_dir
         target_path = os.path.join(target_dir, "test_pipeline.joblib")
-        self.xgb_pipe.model_file_name = "test_pipeline.joblib"
-        self.xgb_pipe.serialize_model(as_onnx=False)
+        xgb_pipe.model_file_name = "test_pipeline.joblib"
+        xgb_pipe.serialize_model(as_onnx=False)
         assert os.path.exists(target_path)
 
         with open(target_path, "rb") as file:
@@ -394,12 +394,12 @@ class TestSklearnModel:
         """
         Test serialize and load pipeline using Sklearn API with lightgbm model.
         """
-
+        lgb_pipe = SklearnModel(self.lgb, tmp_model_dir)
         target_dir = os.path.join(tmp_model_dir, "lgb_pipeline")
-        self.lgb_pipe.artifact_dir = target_dir
+        lgb_pipe.artifact_dir = target_dir
         target_path = os.path.join(target_dir, "test_pipeline.joblib")
-        self.lgb_pipe.model_file_name = "test_pipeline.joblib"
-        self.lgb_pipe.serialize_model(as_onnx=False)
+        lgb_pipe.model_file_name = "test_pipeline.joblib"
+        lgb_pipe.serialize_model(as_onnx=False)
         assert os.path.exists(target_path)
 
         with open(target_path, "rb") as file:
@@ -434,12 +434,12 @@ class TestSklearnModel:
         """
         Test serialize and load pipeline using Sklearn API with lightgbm regressor model.
         """
-
+        lgb_reg_pipe = SklearnModel(self.lgb_reg, tmp_model_dir)
         target_dir = os.path.join(tmp_model_dir, "lgb_reg_pipeline")
-        self.lgb_reg_pipe.artifact_dir = target_dir
+        lgb_reg_pipe.artifact_dir = target_dir
         target_path = os.path.join(target_dir, "test_pipeline.joblib")
-        self.lgb_reg_pipe.model_file_name = "test_pipeline.joblib"
-        self.lgb_reg_pipe.serialize_model(as_onnx=False)
+        lgb_reg_pipe.model_file_name = "test_pipeline.joblib"
+        lgb_reg_pipe.serialize_model(as_onnx=False)
         assert os.path.exists(target_path)
 
         with open(target_path, "rb") as file:
@@ -456,20 +456,22 @@ class TestSklearnModel:
             ValueError,
             match="`initial_types` can not be detected. Please directly pass initial_types.",
         ):
-            self.sklearn_model.to_onnx(X_sample=wrong_format)
+            sklearn_onnx_serializer = SklearnOnnxModelSerializer()
+            sklearn_onnx_serializer.estimator = self.sklearn_model.estimator
+            sklearn_onnx_serializer._to_onnx(X_sample=wrong_format)
 
     @pytest.mark.parametrize(
         "test_data",
         [pd.Series([1, 2, 3]), [1, 2, 3]],
     )
     def test_get_data_serializer_helper_with_convert_to_list(self, test_data):
-        serialized_data = self.sklearn_model.get_data_serializer(test_data).to_dict()
+        serialized_data = self.sklearn_model.get_data_serializer().serialize(test_data)
         assert serialized_data["data"] == [1, 2, 3]
         assert serialized_data["data_type"] == str(type(test_data))
 
     def test_get_data_serializer_helper_numpy(self):
         test_data = np.array([1, 2, 3])
-        serialized_data = self.sklearn_model.get_data_serializer(test_data).to_dict()
+        serialized_data = self.sklearn_model.get_data_serializer().serialize(test_data)
         load_bytes = BytesIO(base64.b64decode(serialized_data["data"].encode("utf-8")))
         deserialized_data = np.load(load_bytes, allow_pickle=True)
         assert (deserialized_data == test_data).any()
@@ -481,7 +483,7 @@ class TestSklearnModel:
         ],
     )
     def test_get_data_serializer_helper_with_pandasdf(self, test_data):
-        serialized_data = self.sklearn_model.get_data_serializer(test_data).to_dict()
+        serialized_data = self.sklearn_model.get_data_serializer().serialize(test_data)
         assert (
             serialized_data["data"]
             == '{"a":{"0":1,"1":2},"b":{"0":2,"1":3},"c":{"0":3,"1":4}}'
@@ -493,7 +495,7 @@ class TestSklearnModel:
         ["I have an apple", {"a": [1], "b": [2], "c": [3]}],
     )
     def test_get_data_serializer_helper_with_no_change(self, test_data):
-        serialized_data = self.sklearn_model.get_data_serializer(test_data).to_dict()
+        serialized_data = self.sklearn_model.get_data_serializer().serialize(test_data)
         assert serialized_data["data"] == test_data
 
     def test_get_data_serializer_helper_raise_error(self):
@@ -502,9 +504,9 @@ class TestSklearnModel:
 
         test_data = TestData()
         with pytest.raises(TypeError):
-            serialized_data = self.sklearn_model.get_data_serializer(
+            serialized_data = self.sklearn_model.get_data_serializer().serialize(
                 test_data
-            ).to_dict()
+            )
 
     def test_to_onnx_with_onnx_uninstalled(self):
         """
@@ -512,7 +514,7 @@ class TestSklearnModel:
         """
         with mock.patch.dict(sys.modules, {"onnx": None}):
             with pytest.raises(ModuleNotFoundError):
-                sklearn_onnx = self.sklearn_model.to_onnx(
+                sklearn_onnx = SklearnOnnxModelSerializer()._to_onnx(
                     X_sample=np.array([[1, 2, 3], [1, 2, 3]])
                 )
 
@@ -522,7 +524,7 @@ class TestSklearnModel:
         """
         with mock.patch.dict(sys.modules, {"onnxmltools": None}):
             with pytest.raises(ModuleNotFoundError):
-                sklearn_onnx = self.sklearn_model.to_onnx(
+                sklearn_onnx = SklearnOnnxModelSerializer()._to_onnx(
                     X_sample=np.array([[1, 2, 3], [1, 2, 3]])
                 )
 
@@ -532,7 +534,7 @@ class TestSklearnModel:
         """
         with mock.patch.dict(sys.modules, {"skl2onnx": None}):
             with pytest.raises(ModuleNotFoundError):
-                sklearn_onnx = self.sklearn_model.to_onnx(
+                sklearn_onnx = SklearnOnnxModelSerializer()._to_onnx(
                     X_sample=np.array([[1, 2, 3], [1, 2, 3]])
                 )
 

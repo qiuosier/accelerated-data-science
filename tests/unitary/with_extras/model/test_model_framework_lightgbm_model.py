@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
@@ -111,9 +110,10 @@ class TestLightGBMModel:
         """
         Test serialize and load model using joblib with LGBMClassifier.
         """
+        LGBMClassifier_model = LightGBMModel(self.LGBMClassifier, tmp_model_dir)
         target_path = os.path.join(tmp_model_dir, "test_LGBMClassifier.joblib")
-        self.LGBMClassifier_model.model_file_name = "test_LGBMClassifier.joblib"
-        self.LGBMClassifier_model.serialize_model(as_onnx=False)
+        LGBMClassifier_model.model_file_name = "test_LGBMClassifier.joblib"
+        LGBMClassifier_model.serialize_model(as_onnx=False)
         assert os.path.exists(target_path)
 
         with open(target_path, "rb") as f:
@@ -127,9 +127,10 @@ class TestLightGBMModel:
         """
         Test serialize and load model using joblib with LGBMRegressor.
         """
+        LGBMRegressor_model = LightGBMModel(self.LGBMRegressor, tmp_model_dir)
         target_path = os.path.join(tmp_model_dir, "test_LGBMRegressor.joblib")
-        self.LGBMRegressor_model.model_file_name = "test_LGBMRegressor.joblib"
-        self.LGBMRegressor_model.serialize_model(as_onnx=False)
+        LGBMRegressor_model.model_file_name = "test_LGBMRegressor.joblib"
+        LGBMRegressor_model.serialize_model(as_onnx=False)
         assert os.path.exists(target_path)
 
         with open(target_path, "rb") as f:
@@ -145,28 +146,27 @@ class TestLightGBMModel:
         """
         self.LGBMClassifier_model.model_file_name = "test.abc"
         with pytest.raises(
-            ValueError,
-            match="`model_file_name` has to be ending with `.onnx` for onnx format.",
+            AssertionError,
+            match="Wrong file extension. Expecting `.onnx` suffix.",
         ):
-            self.LGBMClassifier_model._handle_model_file_name(True, "test.abc")
-
-        self.LGBMClassifier_model.model_file_name = "test.abc"
-        with pytest.raises(
-            ValueError,
-            match="`model_file_name` has to be ending with `.joblib` for joblib format.",
-        ):
-            self.LGBMClassifier_model._handle_model_file_name(False, "test.abc")
+            self.LGBMClassifier_model._handle_model_file_name(
+                as_onnx=True, model_file_name="test.abc"
+            )
 
         self.LGBMClassifier_model.model_file_name = "test.joblib"
         assert (
-            self.LGBMClassifier_model._handle_model_file_name(False, "test.joblib")
+            self.LGBMClassifier_model._handle_model_file_name(
+                as_onnx=False, model_file_name="test.joblib"
+            )
             == "test.joblib"
         )
 
     def test_serialize_without_model_file_name(self):
         self.LGBMClassifier_model.model_file_name = None
         assert (
-            self.LGBMClassifier_model._handle_model_file_name(False, "test.joblib")
+            self.LGBMClassifier_model._handle_model_file_name(
+                as_onnx=False, model_file_name="test.joblib"
+            )
             == "test.joblib"
         )
 
@@ -175,17 +175,17 @@ class TestLightGBMModel:
         [pd.Series([1, 2, 3]), [1, 2, 3]],
     )
     def test_get_data_serializer_helper_with_convert_to_list(self, test_data):
-        serialized_data = self.LGBMClassifier_model.get_data_serializer(
+        serialized_data = self.LGBMClassifier_model.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         assert serialized_data["data"] == [1, 2, 3]
         assert serialized_data["data_type"] == str(type(test_data))
 
     def test_get_data_serializer_helper_numpy(self):
         test_data = np.array([1, 2, 3])
-        serialized_data = self.LGBMClassifier_model.get_data_serializer(
+        serialized_data = self.LGBMClassifier_model.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         load_bytes = BytesIO(base64.b64decode(serialized_data["data"].encode("utf-8")))
         deserialized_data = np.load(load_bytes, allow_pickle=True)
         assert (deserialized_data == test_data).any()
@@ -197,9 +197,9 @@ class TestLightGBMModel:
         ],
     )
     def test_get_data_serializer_helper_with_pandasdf(self, test_data):
-        serialized_data = self.LGBMClassifier_model.get_data_serializer(
+        serialized_data = self.LGBMClassifier_model.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         assert (
             serialized_data["data"]
             == '{"a":{"0":1,"1":2},"b":{"0":2,"1":3},"c":{"0":3,"1":4}}'
@@ -211,9 +211,9 @@ class TestLightGBMModel:
         ["I have an apple", {"a": [1], "b": [2], "c": [3]}],
     )
     def test_get_data_serializer_helper_with_no_change(self, test_data):
-        serialized_data = self.LGBMClassifier_model.get_data_serializer(
+        serialized_data = self.LGBMClassifier_model.get_data_serializer().serialize(
             test_data
-        ).to_dict()
+        )
         assert serialized_data["data"] == test_data
 
     def test_get_data_serializer_helper_raise_error(self):
@@ -222,25 +222,28 @@ class TestLightGBMModel:
 
         test_data = TestData()
         with pytest.raises(TypeError):
-            serialized_data = self.LGBMClassifier_model.get_data_serializer(
+            serialized_data = self.LGBMClassifier_model.get_data_serializer().serialize(
                 test_data
-            ).to_dict()
+            )
 
     def test_X_sample_related_for_to_onnx(self):
         """
         Test if X_sample works in to_onnx propertly.
         """
         wrong_format = [1, 2, 3, 4]
+        onnx_serializer = LightGBMOnnxModelSerializer()
+        onnx_serializer.estimator = self.Booster_model.estimator
         assert isinstance(
-            self.Booster_model.to_onnx(X_sample=wrong_format),
+            onnx_serializer._to_onnx(X_sample=wrong_format),
             onnx.onnx_ml_pb2.ModelProto,
         )
-        self.Booster_model.estimator = None
+
+        onnx_serializer.estimator = None
         with pytest.raises(
             ValueError,
             match="`initial_types` can not be detected. Please directly pass initial_types.",
         ):
-            self.Booster_model.to_onnx(X_sample=wrong_format)
+            onnx_serializer._to_onnx(X_sample=wrong_format)
 
     def test_lightgbm_to_onnx_with_lightgbm_uninstalled(self):
         """

@@ -21,6 +21,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.datasets import load_iris
 
+#
+# run with:
+#  python -m pytest -v -p no:warnings --cov-config=.coveragerc --cov=./ --cov-report html /home/datascience/advanced-ds/tests/unitary/test_evaluations_evaluator.py
+#
+
 
 class EvaluationMetricsTest(unittest.TestCase):
     """

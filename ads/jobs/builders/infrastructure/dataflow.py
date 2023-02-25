@@ -20,6 +20,7 @@ import oci.util as oci_util
 import yaml
 from ads.common import utils
 from ads.common.auth import default_signer
+from ads.common.decorator.utils import class_or_instance_method
 from ads.common.oci_client import OCIClientFactory
 from ads.common.oci_mixin import OCIModelMixin
 from ads.common.utils import batch_convert_case, camel_to_snake
@@ -1046,10 +1047,11 @@ class DataFlow(Infrastructure):
         dict
             serialized job as a dictionary
         """
+        spec = self._convert_shape_config(copy.deepcopy(self._spec), "camel")
         return {
             "kind": self.kind,
             "type": self.type,
-            "spec": batch_convert_case(self._spec, "camel"),
+            "spec": batch_convert_case(spec, "camel"),
         }
 
     @classmethod
@@ -1067,7 +1069,53 @@ class DataFlow(Infrastructure):
         DataFlow
             a Data Flow job instance
         """
-        return cls(spec=batch_convert_case(config["spec"], "snake"))
+        spec = cls._convert_shape_config(copy.deepcopy(config["spec"]), "snake")
+        return cls(spec=batch_convert_case(spec, "snake"))
+
+    @class_or_instance_method
+    def _convert_shape_config(cls, spec: Dict, to_format: str) -> Dict:
+        """Converts the format of shape config details from camel to snake, or vice versa.
+
+        Parameters
+        ----------
+        spec: dict
+            dictionary of specs
+        to_format: str
+            the format that's converted to
+
+        Returns
+        -------
+        Dict
+            dictionary with converted shape config details
+        """
+        shape_config_map = [
+            cls.CONST_DRIVER_SHAPE_CONFIG,
+            cls.CONST_EXECUTOR_SHAPE_CONFIG,
+            cls.attribute_map[cls.CONST_DRIVER_SHAPE_CONFIG],
+            cls.attribute_map[cls.CONST_EXECUTOR_SHAPE_CONFIG],
+        ]
+        converted_map = {
+            "camel": {
+                cls.CONST_MEMORY_IN_GBS: cls.attribute_map[cls.CONST_MEMORY_IN_GBS],
+                cls.CONST_OCPUS: cls.CONST_OCPUS,
+            },
+            "snake": {
+                cls.attribute_map[cls.CONST_MEMORY_IN_GBS]: cls.CONST_MEMORY_IN_GBS,
+                cls.CONST_OCPUS: cls.CONST_OCPUS,
+            },
+        }
+        for shape_config in shape_config_map:
+            shape_config_value = spec.pop(shape_config, {})
+            if shape_config_value:
+                temp_maps = {}
+                for key, value in shape_config_value.items():
+                    converted_key = converted_map[to_format].get(key, None)
+                    if converted_key:
+                        temp_maps[converted_key] = value
+                    else:
+                        temp_maps[key] = value
+                spec[shape_config] = copy.deepcopy(temp_maps)
+        return spec
 
     def __repr__(self) -> str:
         """Displays the object as YAML."""
