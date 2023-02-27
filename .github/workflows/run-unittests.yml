@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   test:
-    name: python ${{ matrix.python-version }}, ${{ matrix.test-path }}
+    name: python ${{ matrix.python-version }}, ${{ matrix.test-path }}, ignore ${{ matrix.ignore-path }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -33,7 +33,7 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
         include:
           - test-path: "tests/unitary/default_setup tests/unitary/with_extras"
-            ignore: "tests/unitary/with_extras/model"
+            ignore-path: "tests/unitary/with_extras/model"
           - test-path: "tests/unitary/with_extras/model"
 
     steps:
@@ -84,7 +84,7 @@ jobs:
         run: |
           python -m pytest -v -p no:warnings --durations=5 \
           ${{ matrix.test-path }} \
-          --ignore ${{ matrix.ignore }} \
+          --ignore "${{ matrix.ignore-path }}" \
           --cov --cov-append --cov-report=html
 
 #       Uploading test artifacts
