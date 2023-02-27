@@ -1,4 +1,4 @@
-name: Unit Tests unitary/*
+name: Unit Tests unitary
 
 on:
   workflow_dispatch:
