@@ -78,7 +78,6 @@ jobs:
       - name: "Test env setup"
         timeout-minutes: 20
         shell: bash
-        env:
         run: |
           set -x # print commands that are executed
           sudo apt-get install libkrb5-dev graphviz
