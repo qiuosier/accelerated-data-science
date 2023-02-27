@@ -32,9 +32,9 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
         include:
+          - test-path: "tests/unitary/with_extras/model"
           - test-path: "tests/unitary/default_setup tests/unitary/with_extras"
             ignore-path: "tests/unitary/with_extras/model"
-          - test-path: "tests/unitary/with_extras/model"
 
     steps:
       - uses: actions/checkout@v3
