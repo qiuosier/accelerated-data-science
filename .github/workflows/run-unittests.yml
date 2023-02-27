@@ -72,7 +72,7 @@ jobs:
           source /home/runner/.bashrc
           pip install -r test-requirements.txt
           python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup \
-          --deselect=tests/unitary/default_setup/model/test_artifact_uploader.py::TestArtifactUploader::test_upload_small_artifact
+#          --deselect=tests/unitary/default_setup/model/test_artifact_uploader.py::TestArtifactUploader::test_upload_small_artifact
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90
@@ -87,7 +87,7 @@ jobs:
           source /home/runner/.bashrc
           pip install setuptools
           pip install -r dev-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary
+          python -m pytest -v -p no:warnings --durations=5 tests/unitary \
           --cov --cov-report=html
 
 #       Uploading test artifacts
