@@ -21,6 +21,10 @@ concurrency:
 permissions:
   contents: read
 
+# hack for https://github.com/actions/cache/issues/810#issuecomment-1222550359
+env:
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 5
+
 jobs:
   test:
     name: python ${{ matrix.python-version }}, ${{ matrix.test-path }}, ignore ${{ matrix.ignore-path }}
@@ -76,7 +80,7 @@ jobs:
           pip install -r dev-requirements.txt
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
-        timeout-minutes: 90
+        timeout-minutes: 60
         shell: bash
         env:
           NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
