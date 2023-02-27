@@ -84,7 +84,7 @@ jobs:
         run: |
           python -m pytest -v -p no:warnings --durations=5 \
           ${{ matrix.test-path }} \
-          --ignore ${{ matrix.ignore }}
+          --ignore ${{ matrix.ignore }} \
           --cov --cov-append --cov-report=html
 
 #       Uploading test artifacts
