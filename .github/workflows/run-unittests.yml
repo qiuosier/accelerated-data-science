@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Unit Tests unitary/*
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   test:
-    name: python ${{ matrix.python-version }}
+    name: python ${{ matrix.python-version }}, ${{ matrix.test-path }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -38,11 +38,13 @@ jobs:
           "tests/unitary/with_extras/database",
           "tests/unitary/with_extras/dataset",
           "tests/unitary/with_extras/evaluator",
+          "tests/unitary/with_extras/feature_engineering",
           "tests/unitary/with_extras/feature_types",
           "tests/unitary/with_extras/hpo",
           "tests/unitary/with_extras/model",
           "tests/unitary/with_extras/opctl",
           "tests/unitary/with_extras/pipeline",
+          "tests/unitary/with_extras/vault",
         ]
 
     steps:
@@ -73,18 +75,17 @@ jobs:
           echo "$ADS_OCI_PRIVATE_KEY_REALLIKE" > "/home/runner/.oci/oci_ads_user.pem"
           echo "key_file=/home/runner/.oci/oci_ads_user.pem" >> "/home/runner/.oci/config"
 
-      - name: "Run default_setup tests folder ONLY with minimum ADS dependencies"
-        timeout-minutes: 90
+      - name: "Test env setup"
+        timeout-minutes: 20
         shell: bash
         env:
-          NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
-          NoDependency: True
         run: |
           set -x # print commands that are executed
+          sudo apt-get install libkrb5-dev graphviz
           $CONDA/bin/conda init
           source /home/runner/.bashrc
-          pip install -r test-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup
+          pip install setuptools
+          pip install -r dev-requirements.txt
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90
@@ -93,12 +94,6 @@ jobs:
           NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
           CONDA_PREFIX: /usr/share/miniconda
         run: |
-          set -x # print commands that are executed
-          sudo apt-get install libkrb5-dev graphviz
-          $CONDA/bin/conda init
-          source /home/runner/.bashrc
-          pip install setuptools
-          pip install -r dev-requirements.txt
           python -m pytest -v -p no:warnings --durations=5 ${{ matrix.test-path }} \
           --cov --cov-append --cov-report=html
 
