@@ -31,23 +31,10 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
-        test-path: [
-          "
- tests/unitary/default_setup
- tests/unitary/with_extras/ads_string
- tests/unitary/with_extras/bds
- tests/unitary/with_extras/database
- tests/unitary/with_extras/dataset
- tests/unitary/with_extras/evaluator
- tests/unitary/with_extras/feature_engineering
- tests/unitary/with_extras/feature_types
- tests/unitary/with_extras/hpo
- tests/unitary/with_extras/opctl
- tests/unitary/with_extras/pipeline
- tests/unitary/with_extras/vault
-          ",
-          "tests/unitary/with_extras/model",
-        ]
+        include:
+          - test-path: "tests/unitary/default_setup tests/unitary/with_extras"
+            ignore: "tests/unitary/with_extras/model"
+          - test-path: "tests/unitary/with_extras/model"
 
     steps:
       - uses: actions/checkout@v3
@@ -95,7 +82,9 @@ jobs:
           NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
           CONDA_PREFIX: /usr/share/miniconda
         run: |
-          python -m pytest -v -p no:warnings --durations=5 ${{ matrix.test-path }} \
+          python -m pytest -v -p no:warnings --durations=5 \
+          ${{ matrix.test-path }} \
+          --ignore ${{ matrix.ignore }}
           --cov --cov-append --cov-report=html
 
 #       Uploading test artifacts
