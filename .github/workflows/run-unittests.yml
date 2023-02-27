@@ -31,18 +31,31 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
+        test-path: [
+          "tests/unitary/default_setup",
+          "tests/unitary/with_extras/ads_string",
+          "tests/unitary/with_extras/bds",
+          "tests/unitary/with_extras/database",
+          "tests/unitary/with_extras/dataset",
+          "tests/unitary/with_extras/evaluator",
+          "tests/unitary/with_extras/feature_types",
+          "tests/unitary/with_extras/hpo",
+          "tests/unitary/with_extras/model",
+          "tests/unitary/with_extras/opctl",
+          "tests/unitary/with_extras/pipeline",
+        ]
 
     steps:
       - uses: actions/checkout@v3
 
       # Caching python libraries installed with pip
       # https://github.com/actions/cache/blob/main/examples.md#python---pip
-#      - uses: actions/cache@v3
-#        with:
-#          path: ~/.cache/pip
-#          key: ${{ runner.os }}-pip-${{ hashFiles('**/test-requirements.txt') }}
-#          restore-keys: |
-#            ${{ runner.os }}-pip-
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/dev-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -72,7 +85,6 @@ jobs:
           source /home/runner/.bashrc
           pip install -r test-requirements.txt
           python -m pytest -v -p no:warnings --durations=5 tests/unitary/default_setup
-#          --deselect=tests/unitary/default_setup/model/test_artifact_uploader.py::TestArtifactUploader::test_upload_small_artifact
 
       - name: "Run unitary tests folder with maximum ADS dependencies"
         timeout-minutes: 90
@@ -87,8 +99,8 @@ jobs:
           source /home/runner/.bashrc
           pip install setuptools
           pip install -r dev-requirements.txt
-          python -m pytest -v -p no:warnings --durations=5 tests/unitary \
-          --cov --cov-report=html
+          python -m pytest -v -p no:warnings --durations=5 ${{ matrix.test-path }} \
+          --cov --cov-append --cov-report=html
 
 #       Uploading test artifacts
 #       https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#uploading-build-and-test-artifacts
