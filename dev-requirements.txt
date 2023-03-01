@@ -1,4 +1,6 @@
 -r test-requirements.txt
+-e ".[opctl]"
+-e ".[all-optional]"
 pyspark
 arff
 category_encoders
