@@ -303,7 +303,7 @@ class MetadataMixin:
             and self.metadata_taxonomy[MetadataTaxonomyKeys.ALGORITHM].value is None
         ):
             logger.info(
-                "To auto-extract taxonomy metadata the model must be provided. Supported models: automl, keras, lightgbm, pytorch, sklearn, tensorflow, pyspark, and xgboost."
+                "To auto-extract taxonomy metadata the model must be provided. Supported models: keras, lightgbm, pytorch, sklearn, tensorflow, pyspark, and xgboost."
             )
         if use_case_type is None:
             use_case_type = self.metadata_taxonomy[

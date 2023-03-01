@@ -2,6 +2,8 @@
 import json
 import os
 import cloudpickle
+import pandas as pd
+import numpy as np
 from functools import lru_cache
 {% for import in misc_imports %}
 import {{import}}
@@ -36,13 +38,37 @@ def load_model(model_file_name=model_name):
     else:
         raise Exception(f'{model_file_name} is not found in model directory {model_dir}')
 
-def deserialize(data):
+@lru_cache(maxsize=1)
+def fetch_data_type_from_schema(input_schema_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "input_schema.json")):
+    """
+    Returns data type information fetch from input_schema.json.
+
+    Parameters
+    ----------
+    input_schema_path: path of input schema.
+
+    Returns
+    -------
+    data_type: data type fetch from input_schema.json.
+
+    """
+    data_type = {}
+    if os.path.exists(input_schema_path):
+        schema = json.load(open(input_schema_path))
+        for col in schema['schema']:
+            data_type[col['name']] = col['dtype']
+    else:
+        print("input_schema has to be passed in in order to recover the same data type. pass `X_sample` in `ads.model.framework.sklearn_model.SklearnModel.prepare` function to generate the input_schema. Otherwise, the data type might be changed after serialization/deserialization.")
+    return data_type
+
+def deserialize(data, input_schema_path):
     """
     Deserialize json serialization data to data in original type when sent to predict.
 
     Parameters
     ----------
     data: serialized input data.
+    input_schema_path: path of input schema.
 
     Returns
     -------
@@ -51,8 +77,6 @@ def deserialize(data):
     """
 {% if data_deserializer == "json" %}
     import base64
-    import pandas as pd
-    import numpy as np
     from io import BytesIO
     if isinstance(data, bytes):
         return data
@@ -91,20 +115,21 @@ def deserialize(data):
     return data
 {% endif %}
 
-def pre_inference(data):
+def pre_inference(data, input_schema_path):
     """
     Preprocess data
 
     Parameters
     ----------
     data: Data format as expected by the predict API of the core estimator.
+    input_schema_path: path of input schema.
 
     Returns
     -------
     data: Data format after any processing.
 
     """
-    return deserialize(data)
+    return deserialize(data, input_schema_path)
 
 def post_inference(yhat):
     """
@@ -119,16 +144,21 @@ def post_inference(yhat):
     yhat: Data format after any processing.
 
     """
+    if isinstance(yhat, pd.core.frame.DataFrame):
+        yhat = yhat.values
+    if isinstance(yhat, np.ndarray):
+        yhat = yhat.tolist()
     return yhat
 
-def predict(data, model=load_model()):
+def predict(data, model=load_model(), input_schema_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), "input_schema.json")):
     """
     Returns prediction given the model and data to predict
 
     Parameters
     ----------
-    model: Model instance returned by load_model API
-    data: Data format as expected by the predict API of the core estimator. For eg. in case of sckit models it could be numpy array/List of list/Pandas DataFrame
+    model: Model instance returned by load_model API.
+    data: Data format as expected by the predict API of the core estimator. For eg. in case of sckit models it could be numpy array/List of list/Pandas DataFrame.
+    input_schema_path: path of input schema.
 
     Returns
     -------
@@ -136,7 +166,7 @@ def predict(data, model=load_model()):
         Format: {'prediction': output from model.predict method}
 
     """
-    features = pre_inference(data)
+    features = pre_inference(data, input_schema_path)
     yhat = post_inference(
         model.predict(features)
     )

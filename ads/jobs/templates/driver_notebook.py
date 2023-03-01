@@ -20,17 +20,21 @@ OUTPUT_URI:
 import logging
 import json
 import os
-import subprocess
 from typing import Optional
-from urllib.parse import urlparse
 
 import nbformat
-import oci
 from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
+
+try:
+    # This is used by ADS and testing
+    from .driver_utils import OCIHelper, JobRunner, set_log_level
+except ImportError:
+    # This is used when the script is in a job run.
+    from driver_utils import OCIHelper, JobRunner, set_log_level
 
 
 logger = logging.getLogger(__name__)
-
+logger = set_log_level(logger)
 
 class ADSExecutePreprocessor(ExecutePreprocessor):
     """Customized Execute Preprocessor for running notebook."""
@@ -77,7 +81,7 @@ class ADSExecutePreprocessor(ExecutePreprocessor):
                     if tag in self.exclude_tags:
                         return cell, resources
             except Exception as ex:
-                logger.error("An error occurred when reading cell tags: %s", str(ex))
+                logger.exception("An error occurred when reading cell tags.")
         # Run the cell
         cell, resources = super().preprocess_cell(cell, resources, *args, **kwargs)
         # Print cell output
@@ -87,89 +91,8 @@ class ADSExecutePreprocessor(ExecutePreprocessor):
             try:
                 self._print_cell_outputs(cell)
             except Exception as ex:
-                logger.error("An error occurred when reading cell outputs: %s", str(ex))
+                logger.exception("An error occurred when reading cell outputs.")
         return cell, resources
-
-
-class OCIHelper:
-    @staticmethod
-    def init_oci_client(client_class):
-        """Initializes OCI client with API key or Resource Principal.
-
-        Parameters
-        ----------
-        client_class :
-            The class of OCI client to be initialized.
-        """
-        if os.environ.get("OCI_RESOURCE_PRINCIPAL_VERSION"):
-            logger.info(
-                "Initializing %s with Resource Principal...", client_class.__name__
-            )
-            client = client_class(
-                {}, signer=oci.auth.signers.get_resource_principals_signer()
-            )
-        else:
-            logger.info("Initializing %s with API Key...", {client_class.__name__})
-            client = client_class(oci.config.from_file())
-        return client
-
-    @staticmethod
-    def copy_outputs(output_dir: str, output_uri: dict) -> None:
-        """Copies the output files to object storage bucket.
-
-        Parameters
-        ----------
-        output_dir : str
-            Path of the output directory containing files to be copied.
-        output_uri : str
-            URI of the object storage path to store the output files.
-        """
-        output_dir = os.path.abspath(os.path.expanduser(output_dir))
-        if not os.path.exists(output_dir):
-            logger.error("Output directory %s not found.", output_dir)
-            return
-        logger.info("Copying files in %s to %s...", output_dir, output_uri)
-        parsed = urlparse(output_uri)
-        bucket_name = parsed.username
-        namespace = parsed.hostname
-        if not bucket_name or not namespace:
-            logger.error("Invalid OUTPUT_URI: %s", output_uri)
-            logger.error(
-                "OUTPUT_URI should have the format: oci://bucket@namespace/path/to/dir"
-            )
-            return
-        prefix = parsed.path
-        oci_os_client = OCIHelper.init_oci_client(
-            oci.object_storage.ObjectStorageClient
-        )
-
-        if not prefix:
-            prefix = ""
-        prefix = prefix.strip("/")
-
-        for path, _, files in os.walk(output_dir):
-            for name in files:
-                file_path = os.path.join(path, name)
-
-                with open(file_path, "rb") as pkf:
-                    # Get the relative path of the file to keep the directory structure
-                    relative_path = os.path.relpath(file_path, output_dir)
-                    if prefix:
-                        file_prefix = os.path.join(prefix, relative_path)
-                    else:
-                        # Save file to bucket root if prefix is empty.
-                        file_prefix = relative_path
-
-                    logger.debug(
-                        f"Saving {relative_path} to {bucket_name}@{namespace}/{file_prefix}"
-                    )
-
-                    oci_os_client.put_object(
-                        namespace,
-                        bucket_name,
-                        file_prefix,
-                        pkf,
-                    )
 
 
 def run_notebook(
@@ -222,18 +145,10 @@ def run_notebook(
     return ex
 
 
-def substitute_output_uri(output_uri):
-    return os.path.expandvars(output_uri)
-
-
 def main() -> None:
     """Runs the driver to execute a notebook."""
-    try:
-        # Ignore the error as conda-unpack may not exists
-        subprocess.check_output("conda-unpack", stderr=subprocess.STDOUT, shell=True)
-    except subprocess.CalledProcessError as ex:
-        logger.debug("conda-unpack exits with non-zero return code %s", ex.returncode)
-        logger.debug(ex.output)
+    JobRunner().conda_unpack()
+
     notebook_file_path = os.path.join(
         os.path.dirname(__file__), os.environ.get("JOB_RUN_NOTEBOOK")
     )
@@ -247,15 +162,9 @@ def main() -> None:
         logger.info("Excluding cells with any of the following tags: %s", tags)
     # Run the notebook
     ex = run_notebook(notebook_file_path, working_dir=output_dir, exclude_tags=tags)
+
     # Save the outputs
-    output_uri = os.environ.get("OUTPUT_URI")
-    if output_uri:
-        output_uri = substitute_output_uri(output_uri)
-        OCIHelper.copy_outputs(output_dir, output_uri)
-    else:
-        logger.error(
-            "OUTPUT_URI is not defined in environment variable. No output file is copied."
-        )
+    OCIHelper.copy_outputs(output_dir)
 
     if ex:
         raise ex

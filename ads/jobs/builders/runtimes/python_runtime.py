@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any
+from typing import Any, Dict
 
 from ads.jobs.builders.runtimes.base import Runtime
 from ads.common.auth import default_signer
@@ -189,6 +189,7 @@ class _PythonRuntimeMixin(Runtime):
     CONST_PYTHON_PATH = "pythonPath"
     CONST_ENTRYPOINT = "entrypoint"
     CONST_ENTRY_FUNCTION = "entryFunction"
+    CONST_WORKING_DIR = "workingDir"
 
     attribute_map = {
         CONST_OUTPUT_DIR: "output_dir",
@@ -196,6 +197,7 @@ class _PythonRuntimeMixin(Runtime):
         CONST_PYTHON_PATH: "python_path",
         CONST_ENTRYPOINT: CONST_ENTRYPOINT,
         CONST_ENTRY_FUNCTION: "entry_function",
+        CONST_WORKING_DIR: "working_dir",
     }
     attribute_map.update(Runtime.attribute_map)
 
@@ -266,6 +268,29 @@ class _PythonRuntimeMixin(Runtime):
         self.set_spec(self.CONST_ENTRY_FUNCTION, func)
         return self
 
+    def with_working_dir(self, working_dir: str):
+        """Specifies the working directory in the job run.
+        By default, the working directory will the directory containing the user code (job artifact directory).
+        This can be changed by specifying a relative path to the job artifact directory.
+
+        Parameters
+        ----------
+        working_dir : str
+            The path of the working directory.
+            This can be a relative path from the job artifact directory.
+
+        Returns
+        -------
+        self
+            The runtime instance.
+        """
+        return self.set_spec(self.CONST_WORKING_DIR, working_dir)
+
+    @property
+    def working_dir(self) -> str:
+        """The working directory for the job run."""
+        return self.get_spec(self.CONST_WORKING_DIR, ".")
+
     @property
     def output_dir(self) -> str:
         """Directory in the Job run container for saving output files generated in the job"""
@@ -295,33 +320,9 @@ class _PythonRuntimeMixin(Runtime):
 class PythonRuntime(ScriptRuntime, _PythonRuntimeMixin):
     """Represents a job runtime using ADS driver script to run Python code"""
 
-    CONST_WORKING_DIR = "workingDir"
-    attribute_map = {CONST_WORKING_DIR: "working_dir"}
+    attribute_map = {}
     attribute_map.update(ScriptRuntime.attribute_map)
     attribute_map.update(_PythonRuntimeMixin.attribute_map)
-
-    def with_working_dir(self, working_dir: str):
-        """Specifies the working directory in the job run.
-        By default, the working directory will the directory containing the user code (job artifact directory).
-        This can be changed by specifying a relative path to the job artifact directory.
-
-        Parameters
-        ----------
-        working_dir : str
-            The path of the working directory.
-            This can be a relative path from the job artifact directory.
-
-        Returns
-        -------
-        self
-            The runtime instance.
-        """
-        return self.set_spec(self.CONST_WORKING_DIR, working_dir)
-
-    @property
-    def working_dir(self) -> str:
-        """The working directory for the job run."""
-        return self.get_spec(self.CONST_WORKING_DIR, ".")
 
 
 class NotebookRuntime(CondaRuntime):
@@ -340,6 +341,15 @@ class NotebookRuntime(CondaRuntime):
         CONST_EXCLUDE_TAG: "exclude_tags",
     }
     attribute_map.update(CondaRuntime.attribute_map)
+
+    def __init__(self, spec: Dict = None, **kwargs) -> None:
+        if spec and self.CONST_OUTPUT_URI_ALT in spec:
+            val = spec.pop(self.CONST_OUTPUT_URI_ALT)
+            spec[self.CONST_OUTPUT_URI] = val
+        if self.CONST_OUTPUT_URI_ALT in kwargs:
+            val = kwargs.pop(self.CONST_OUTPUT_URI_ALT)
+            kwargs[self.CONST_OUTPUT_URI] = val
+        super().__init__(spec, **kwargs)
 
     @property
     def notebook_uri(self) -> str:

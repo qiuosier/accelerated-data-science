@@ -15,6 +15,11 @@ from configparser import NoSectionError, NoOptionError, MAX_INTERPOLATION_DEPTH
 
 
 class EnvVarInterpolation(ExtendedInterpolation):
+    """Modified version of ExtendedInterpolation to ignore errors
+
+    https://github.com/python/cpython/blob/main/Lib/configparser.py
+    """
+
     def before_set(self, parser, section: str, option: str, value: str) -> str:
         return value
 
@@ -44,7 +49,6 @@ class EnvVarInterpolation(ExtendedInterpolation):
                         "Bad interpolation variable reference %r" % rest,
                     )
                 path = m.group(1).split(":")
-                rest = rest[m.end() :]
                 sect = section
                 opt = option
                 try:
@@ -57,11 +61,15 @@ class EnvVarInterpolation(ExtendedInterpolation):
                         v = parser.get(sect, opt, raw=True)
                     else:
                         raise InterpolationSyntaxError(
-                            option, section, "More than one ':' found: %r" % (rest,)
+                            option,
+                            section,
+                            "More than one ':' found: %r" % (rest[m.end() :],),
                         )
                 except (KeyError, NoSectionError, NoOptionError):
-                    accum.append(rawval)
+                    accum.append(rest)
                     return
+
+                rest = rest[m.end() :]
                 if "$" in v:
                     self._interpolate_some(
                         parser,

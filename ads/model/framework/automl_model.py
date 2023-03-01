@@ -11,6 +11,7 @@ from ads.model.extractor.automl_extractor import AutoMLExtractor
 from ads.model.generic_model import FrameworkSpecificModel
 from ads.model.model_properties import ModelProperties
 from ads.model.serde.common import SERDE
+from ads.common.decorator.deprecate import deprecated
 
 
 class AutoMLModel(FrameworkSpecificModel):
@@ -115,6 +116,10 @@ class AutoMLModel(FrameworkSpecificModel):
 
     _PREFIX = "automl"
 
+    @deprecated(
+        details=f"Working with AutoML has moved from within ADS to working directly with the automlx library. Please use `GenericModel` https://accelerated-data-science.readthedocs.io/en/latest/user_guide/model_registration/frameworks/genericmodel.html class instead. An example can be found at https://accelerated-data-science.readthedocs.io/en/latest/user_guide/model_registration/frameworks/automlmodel.html",
+        raise_error=True,
+    )
     def __init__(
         self,
         estimator: Callable,

@@ -560,7 +560,9 @@ class TestFeatureDomainSchema:
         schema = self.df.ads.model_schema()
         new_schema = Schema.from_dict(schema.to_dict())
 
-        assert isinstance(new_schema["sepal length (cm)"].domain.constraints[0], Expression)
+        assert isinstance(
+            new_schema["sepal length (cm)"].domain.constraints[0], Expression
+        )
         assert new_schema["sepal length (cm)"].domain.constraints[0].evaluate(x="5.0")
 
     def teardown_method(self):

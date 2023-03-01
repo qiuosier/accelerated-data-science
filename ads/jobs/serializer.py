@@ -62,13 +62,17 @@ class Serializable(ABC):
 
     @staticmethod
     def _write_to_file(s: str, uri: str, **kwargs) -> None:
-        """Write string s into location specified by uri
+        """Write string content into a file specified by uri
 
-        Args:
-            s (string): content
-            uri (string): URI location to save string s
-            kwargs (dict): keyword arguments to be passed into fsspec.open(). For OCI object storage, this should be config="path/to/.oci/config".
-                           For other storage connections consider e.g. host, port, username, password, etc.
+        Parameters
+        ----------
+        s : str
+            The content to be written.
+        uri : str
+            URI of the file to save the content.
+        kwargs : dict
+            keyword arguments to be passed into fsspec.open().
+            For OCI object storage, this can be config="path/to/.oci/config".
         """
         with fsspec.open(uri, "w", **kwargs) as f:
             f.write(s)
@@ -153,7 +157,7 @@ class Serializable(ABC):
                 Serialized version of object.
                 None in case when `uri` provided.
         """
-        yaml_string = yaml.dump(self.to_dict(**kwargs), Dumper=dumper)
+        yaml_string = yaml.dump(self.to_dict(), Dumper=dumper)
         if uri:
             self._write_to_file(s=yaml_string, uri=uri, **kwargs)
             return None

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
+import copy
 from typing import Any, Dict
-
 from ads.jobs.serializer import Serializable
 
 
@@ -107,14 +107,23 @@ class Builder(Serializable):
 
     def to_dict(self) -> dict:
         """Converts the object to dictionary with kind, type and spec as keys."""
+        spec = copy.deepcopy(self._spec)
+        for key, value in spec.items():
+            if hasattr(value, "to_dict"):
+                value = value.to_dict()
+            spec[key] = value
+
         return {
             "kind": self.kind,
             "type": self.type,
-            # "apiVersion": self.api_version,
-            "spec": self._spec,
+            "spec": spec,
         }
 
     @classmethod
     def from_dict(cls, obj_dict: dict):
         """Initialize the object from a Python dictionary"""
         return cls(spec=obj_dict.get("spec"))
+
+    def __repr__(self) -> str:
+        """Displays the object as YAML."""
+        return self.to_yaml()

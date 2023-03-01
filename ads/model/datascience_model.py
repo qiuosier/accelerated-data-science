@@ -1059,10 +1059,6 @@ class DataScienceModel(Builder):
 
         return defaults
 
-    def __repr__(self) -> str:
-        """Displays the object as YAML."""
-        return self.to_yaml()
-
     def __getattr__(self, item):
         if f"with_{item}" in self.__dir__():
             return self.get_spec(item)

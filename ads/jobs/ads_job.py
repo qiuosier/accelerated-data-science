@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8; -*-
 
-# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
+# Copyright (c) 2021, 2023 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl/
 from typing import List, Union
 from urllib.parse import urlparse
@@ -331,6 +331,15 @@ class Job(Builder):
             The job instance (self)
         """
         return self.set_spec("name", name)
+
+    def build(self) -> "Job":
+        """Load default values from the environment for the job infrastructure."""
+        build_method = getattr(self.infrastructure, "build", None)
+        if build_method and callable(build_method):
+            build_method()
+        else:
+            raise NotImplementedError
+        return self
 
     def create(self, **kwargs) -> "Job":
         """Creates the job on the infrastructure.

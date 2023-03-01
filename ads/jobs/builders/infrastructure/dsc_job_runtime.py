@@ -33,6 +33,7 @@ from ads.jobs.builders.runtimes.artifact import (
     ScriptArtifact,
     NotebookArtifact,
     PythonArtifact,
+    GitPythonArtifact,
 )
 from ads.jobs.builders.infrastructure.utils import get_value
 
@@ -754,6 +755,7 @@ class GitPythonRuntimeHandler(CondaRuntimeHandler):
     """Runtime Handler for GitPythonRuntime"""
 
     RUNTIME_CLASS = GitPythonRuntime
+
     PATH_DELIMITER = ":"
     CONST_GIT_URL = "GIT_URL"
     CONST_GIT_BRANCH = "GIT_BRANCH"
@@ -767,6 +769,9 @@ class GitPythonRuntimeHandler(CondaRuntimeHandler):
     CONST_PYTHON_PATH = "PYTHON_PATH"
     CONST_OUTPUT_DIR = "OUTPUT_DIR"
     CONST_OUTPUT_URI = "OUTPUT_URI"
+    CONST_WORKING_DIR = "WORKING_DIR"
+
+    CONST_JOB_ENTRYPOINT = "JOB_RUN_ENTRYPOINT"
 
     SPEC_MAPPINGS = {
         GitPythonRuntime.CONST_GIT_URL: CONST_GIT_URL,
@@ -778,6 +783,7 @@ class GitPythonRuntimeHandler(CondaRuntimeHandler):
         GitPythonRuntime.CONST_GIT_SSH_SECRET_ID: CONST_GIT_SSH_SECRET_ID,
         GitPythonRuntime.CONST_OUTPUT_DIR: CONST_OUTPUT_DIR,
         GitPythonRuntime.CONST_OUTPUT_URI: CONST_OUTPUT_URI,
+        GitPythonRuntime.CONST_WORKING_DIR: CONST_WORKING_DIR
     }
 
     def _translate_artifact(self, runtime: Runtime):
@@ -794,9 +800,7 @@ class GitPythonRuntimeHandler(CondaRuntimeHandler):
         str
             Path to the git driver script.
         """
-        return os.path.join(
-            os.path.dirname(__file__), "../../templates", "driver_oci.py"
-        )
+        return GitPythonArtifact()
 
     def _translate_env(self, runtime: GitPythonRuntime) -> dict:
         """Translate the environment variable.
@@ -822,6 +826,8 @@ class GitPythonRuntimeHandler(CondaRuntimeHandler):
         )
         if runtime.skip_metadata_update:
             envs[self.CONST_SKIP_METADATA] = "1"
+        # Add entrypoint as the ADS driver is packed in a zip file.
+        envs[self.CONST_JOB_ENTRYPOINT] = GitPythonArtifact.CONST_DRIVER_SCRIPT
         return envs
 
     def _extract_envs(self, dsc_job) -> dict:
@@ -842,6 +848,8 @@ class GitPythonRuntimeHandler(CondaRuntimeHandler):
 
         if self.CONST_GIT_URL not in envs or self.CONST_ENTRYPOINT not in envs:
             raise IncompatibleRuntime()
+        # Remove entrypoint as it's added by ADS
+        envs.pop(self.CONST_JOB_ENTRYPOINT, None)
         spec.update(self._extract_specs(envs, self.SPEC_MAPPINGS))
         if GitPythonRuntime.CONST_PYTHON_PATH in spec:
             spec[GitPythonRuntime.CONST_PYTHON_PATH] = spec[

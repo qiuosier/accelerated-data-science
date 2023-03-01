@@ -241,10 +241,6 @@ class DataFlowRun(OCIModelMixin, oci.data_flow.models.Run, RunInstance):
         )
         return self.wait(interval=interval)
 
-    def __repr__(self) -> str:
-        """Displays the object as YAML."""
-        return self.to_yaml()
-
     def to_yaml(self) -> str:
         """Serializes the object into YAML string.
 
@@ -1116,10 +1112,6 @@ class DataFlow(Infrastructure):
                         temp_maps[key] = value
                 spec[shape_config] = copy.deepcopy(temp_maps)
         return spec
-
-    def __repr__(self) -> str:
-        """Displays the object as YAML."""
-        return self.to_yaml()
 
     def to_yaml(self) -> str:
         """Serializes the object into YAML string.

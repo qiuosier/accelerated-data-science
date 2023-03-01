@@ -36,6 +36,8 @@ class Artifact:
 
     """
 
+    CONST_DRIVER_UTILS = "driver_utils.py"
+
     def __init__(self, source, runtime=None) -> None:
         # Get the full path of source file if it is local file.
         if not urlparse(source).scheme:
@@ -234,20 +236,23 @@ class PythonArtifact(Artifact):
     USER_CODE_DIR = "code"
 
     def build(self):
-        """Prepares job artifact for script runtime.
-        If the source is a file, it will be returned as is.
-        If the source is a directory, it will be compressed as a zip file.
-        """
-        driver_script = os.path.join(
-            os.path.dirname(__file__), "../../templates", self.CONST_DRIVER_SCRIPT
-        )
+        """Prepares job artifact for PythonRuntime."""
         basename = os.path.basename(str(self.source).rstrip("/")).split(".", 1)[0]
         artifact_dir = os.path.join(self.temp_dir.name, basename)
         code_dir = os.path.join(artifact_dir, self.USER_CODE_DIR)
         os.makedirs(artifact_dir, exist_ok=True)
 
         # Copy the driver script
-        shutil.copy(driver_script, os.path.join(artifact_dir, self.CONST_DRIVER_SCRIPT))
+        for filename in [
+            self.CONST_DRIVER_UTILS,
+            self.CONST_DRIVER_SCRIPT,
+            NotebookArtifact.CONST_DRIVER_SCRIPT,
+        ]:
+            file_path = os.path.join(
+                os.path.dirname(__file__), "../../templates", filename
+            )
+
+            shutil.copy(file_path, os.path.join(artifact_dir, filename))
 
         # Copy user code
         os.makedirs(code_dir, exist_ok=True)
@@ -276,10 +281,38 @@ class PythonArtifact(Artifact):
                     f"Invalid entrypoint. {self.runtime.entrypoint} does not exist."
                 )
                 if os.path.exists(possible_entrypoint):
-                    err_message += f" Do you mean {os.path.join(self.runtime.working_dir, basename, self.runtime.entrypoint)}?"
-                raise ValueError(err_message)
+                    suggested_entrypoint = os.path.join(basename, self.runtime.entrypoint)
+                    err_message += f" Do you mean {suggested_entrypoint}?"
+                logger.warning(err_message)
 
         # Zip the job artifact
         output = os.path.join(self.temp_dir.name, basename)
         shutil.make_archive(output, "zip", artifact_dir, base_dir="./")
         self.path = output + ".zip"
+
+
+class GitPythonArtifact(Artifact):
+
+    CONST_DRIVER_SCRIPT = "driver_oci.py"
+
+    def __init__(self) -> None:
+        super().__init__("", runtime=None)
+
+    def build(self):
+        """Prepares job artifact for GitPythonRuntime."""
+        artifact_dir = os.path.join(self.temp_dir.name, "ads_driver")
+        os.makedirs(artifact_dir, exist_ok=True)
+        for filename in [
+            self.CONST_DRIVER_UTILS,
+            self.CONST_DRIVER_SCRIPT,
+            NotebookArtifact.CONST_DRIVER_SCRIPT,
+        ]:
+            file_path = os.path.join(
+                os.path.dirname(__file__), "../../templates", filename
+            )
+
+            shutil.copy(file_path, os.path.join(artifact_dir, filename))
+
+        # Zip the job artifact
+        shutil.make_archive(artifact_dir, "zip", artifact_dir, base_dir="./")
+        self.path = artifact_dir + ".zip"

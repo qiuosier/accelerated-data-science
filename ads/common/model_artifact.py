@@ -1390,7 +1390,7 @@ class ModelArtifact(Introspectable):
             The use case type of the model.
         model: (Any, optional). Defaults to None.
             This is an optional model object which is only used to extract taxonomy metadata.
-            Supported models: automl, keras, lightgbm, pytorch, sklearn, tensorflow, and xgboost.
+            Supported models: keras, lightgbm, pytorch, sklearn, tensorflow, and xgboost.
             If the model is not under supported frameworks, then extracting taxonomy metadata will be skipped.
         use_case_type: (str, optional). Default to None.
             The use case type of the model.

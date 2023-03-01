@@ -545,18 +545,21 @@ class OCIModelMixin(OCISerializableMixin):
         return cls.create_instance(**data)
 
     @classmethod
-    def deserialize(cls, data, to_cls=None):
+    def deserialize(cls, data: dict, to_cls: str = None):
         """Deserialize data
 
         Parameters
         ----------
-        data :
+        data : dict
+            A dictionary containing the data to be deserialized.
 
-        to_cls :
-             (Default value = None)
-
-        Returns
-        -------
+        to_cls : str
+            The name of the OCI model class to be initialized using the data.
+            The OCI model class must be from the same OCI service of the OCI client (self.client).
+            Defaults to None, the parent OCI model class name will be used
+            if current class is inherited from an OCI model.
+            If parent OCI model class is not found or not from the same OCI service,
+            the data will be returned as is.
 
         """
         if to_cls is None:
@@ -769,6 +772,7 @@ class OCIModelMixin(OCISerializableMixin):
             hasattr(self, "attribute_map")
             and name in self.attribute_map
             and name not in self._oci_attributes
+            and hasattr(self, "id")
             and self.id
         ):
             # Do not sync if it is in the sync process
