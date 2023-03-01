@@ -42,8 +42,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          repository: ''
 
       # Caching python libraries installed with pip
       # https://github.com/actions/cache/blob/main/examples.md#python---pip
@@ -88,7 +86,7 @@ jobs:
           NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
           CONDA_PREFIX: /usr/share/miniconda
         run: |
-          python -m pytest -v -p no:warnings --durations=5 \
+          pytest -v -p no:warnings --durations=5 \
           ${{ matrix.test-path }} \
           --ignore "${{ matrix.ignore-path }}" \
           --cov --cov-append --cov-report=html
