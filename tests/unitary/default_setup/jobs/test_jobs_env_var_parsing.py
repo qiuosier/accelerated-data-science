@@ -40,8 +40,8 @@ class EnvVarParserTestCase(unittest.TestCase):
         self.assert_env_var_parsing(envs, expected)
 
     def test_env_parser_with_missing_var(self):
-        envs = {"A": "Hello", "B": "${C} World"}
-        expected = {"A": "Hello", "B": "${C} World"}
+        envs = {"A": "Hello", "B": "A ${C} World"}
+        expected = {"A": "Hello", "B": "A ${C} World"}
         self.assert_env_var_parsing(envs, expected)
 
     @pytest.mark.skip("This case is not handled.")

@@ -42,7 +42,7 @@ class DataScienceJobPayloadTest(unittest.TestCase):
         "jobConfigurationDetails": {"jobType": "DEFAULT", "environmentVariables": {}},
         "jobInfrastructureConfigurationDetails": {
             "jobInfrastructureType": "ME_STANDALONE",
-            "blockStorageSize": 50,
+            "blockStorageSizeInGBs": 50,
         },
     }
 
@@ -372,7 +372,7 @@ class DataScienceJobRuntimeTest(DataScienceJobPayloadTest):
                 },
                 NotebookRuntime.CONST_OUTPUT_URI_ALT: OUTPUT_URI,
             }
-        ).with_output(OUTPUT_URI)
+        )
         # For this case, the runtime extracted from the OCI model will
         # have the key outputUri instead of outputURI.
         self.assert_runtime_translation(

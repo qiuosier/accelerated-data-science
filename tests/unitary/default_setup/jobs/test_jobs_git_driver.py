@@ -12,7 +12,7 @@ import unittest
 from tests.unitary.default_setup.jobs.test_jobs_base import DataScienceJobPayloadTest
 
 from ads.jobs import GitPythonRuntime
-from ads.jobs.templates.driver_oci import ArgumentParser
+from ads.jobs.templates.driver_utils import ArgumentParser
 
 
 class GitDriverTestBase(unittest.TestCase):
@@ -40,6 +40,7 @@ class GitDriverTest(DataScienceJobPayloadTest, GitDriverTestBase):
             "GIT_ENTRYPOINT": self.TEST_ENTRY_SCRIPT,
             "CONDA_ENV_SLUG": "mlcpuv1",
             "CONDA_ENV_TYPE": "service",
+            "JOB_RUN_ENTRYPOINT": "driver_oci.py",
         }
 
         self.assert_runtime_translation(runtime, expected_env_var)
@@ -58,9 +59,10 @@ class GitDriverTest(DataScienceJobPayloadTest, GitDriverTestBase):
         )
 
         expected_env_var = {
+            "GIT_ENTRYPOINT": self.TEST_ENTRY_SCRIPT,
             "GIT_URL": self.TEST_GIT_URL,
             "PYTHON_PATH": self.TEST_PYTHON_PATH,
-            "GIT_ENTRYPOINT": self.TEST_ENTRY_SCRIPT,
+            "JOB_RUN_ENTRYPOINT": "driver_oci.py",
             "CONDA_ENV_SLUG": "mlcpuv1",
             "CONDA_ENV_TYPE": "service",
             "OUTPUT_DIR": self.TEST_OUTPUT_DIR,
@@ -79,6 +81,7 @@ class GitDriverTest(DataScienceJobPayloadTest, GitDriverTestBase):
     # However, the "arguments" and "input" should results in the same args and kwargs after git driver parsing.
     def assert_argument_parsing(self, cmd_arguments, argv_input, args, kwargs):
         expected_env_var = {
+            "JOB_RUN_ENTRYPOINT": "driver_oci.py",
             "GIT_URL": self.TEST_GIT_URL,
             "PYTHON_PATH": self.TEST_PYTHON_PATH,
             "GIT_ENTRYPOINT": self.TEST_ENTRY_SCRIPT,
@@ -216,15 +219,14 @@ class GitDriverRunTest(GitDriverTestBase):
                     env=env_vars,
                 )
                 lines = outputs.decode().split("\n")
-                self.assertIn("Job completed.", lines)
                 self.assertIn("This is a function in a module.", lines)
                 self.assertIn("This is a function in a package.", lines)
                 for line in lines:
                     print(line)
                 return lines
-            except subprocess.CalledProcessError as e:
-                print(e.output)
-                print(e.stderr)
+            except subprocess.CalledProcessError as exc:
+                print(exc.output)
+                print(exc.stderr)
                 self.fail("Error occurred when running Git driver.")
 
 

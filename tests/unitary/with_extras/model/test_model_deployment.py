@@ -25,7 +25,7 @@ OCI_LOG_DETAILS = {
 class TestModelDeployment:
     def setup_method(self):
         self.test_model_deployment = ModelDeployment(
-            model_deployment_id="test_model_deployment_id", properties={}
+            model_deployment_id="test_model_deployment_id", properties={"key": "value"}
         )
         self.test_model_deployment._access_log = None
 

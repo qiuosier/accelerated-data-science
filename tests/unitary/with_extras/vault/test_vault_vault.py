@@ -17,8 +17,8 @@ class TestVault:
     """Contains test cases for ads.vault.vault.py"""
 
     vault = Vault(
-        vault_id="ocid1.vault.oc1.iad.bbpuia5yaacuu.abuwcljroewpr3krxa2yajvqos6my3b2lkuim664cjvnidzqj4vqkw62cxla",
-        key_id="ocid1.key.oc1.iad.bbpuia5yaacuu.abuwcljshdypfrt5lhd4xm66oyj3fthpzihzniev4cjobijcfmahvedqrjvq",
+        vault_id="ocid1.vault.oc1.iad.<unique_id>",
+        key_id="ocid1.key.oc1.iad.<unique_id>",
     )
     vault.secret_client = MagicMock()
     vault.vaults_client_composite = MagicMock()
@@ -35,7 +35,7 @@ class TestVault:
         "password": "updated_password",
     }
 
-    secret_ocid = "ocid1.vaultsecret.oc1.iad.amaaaaaav66vvniawm3hpm7kqxke63c7hpv4o5ugajv45mjvyuajhlminh7q"
+    secret_ocid = "ocid1.vaultsecret.oc1.iad.<unique_id>"
     date_time = datetime(2021, 7, 13, 18, 24, 42, 110000, tzinfo=timezone.utc)
 
     def test_create_secret(self):

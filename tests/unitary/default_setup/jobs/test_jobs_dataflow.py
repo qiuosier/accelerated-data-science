@@ -333,7 +333,7 @@ class TestDataFlow(TestDataFlowApp, TestDataFlowRun):
             .with_script_uri(SAMPLE_PAYLOAD["file_uri"])
             .with_archive_uri(SAMPLE_PAYLOAD["archive_uri"])
             .with_custom_conda(
-                "oci://allens_packs@ociodscdev/conda_environments/cpu/PySpark 3.0 and Data Flow/5.0/pyspark30_p37_cpu_v5"
+                "oci://my_bucket@my_namespace/conda_environments/cpu/PySpark 3.0 and Data Flow/5.0/pyspark30_p37_cpu_v5"
             )
         )
 

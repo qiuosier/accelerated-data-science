@@ -42,16 +42,14 @@ class TestMySQL_DB:
                 call().__enter__().execute(f"drop table {self.table_name}"),
                 call()
                 .__enter__()
-                .execute(
-                    "create table TEST_TABLE_V1 (col1 INTEGER, col2 VARCHAR(16))"
-                ),
+                .execute("create table TEST_TABLE_V1 (col1 INTEGER, col2 VARCHAR(16))"),
                 call()
                 .__enter__()
                 .executemany(
                     "insert into TEST_TABLE_V1(col1, col2) values(%s,%s)",
-                    [[1, "èèààòò£±"], [2, "text"]]
+                    [[1, "èèààòò£±"], [2, "text"]],
                 ),
-                call().__exit__(None, None, None)
+                call().__exit__(None, None, None),
             ]
             cursor.assert_has_calls(calls, any_order=False)
             connection.temp_dir = None

@@ -17,7 +17,7 @@ class ContainerRuntimeTestCase(DataScienceJobPayloadTest):
     # The container runtime is expect to modify only the environmentVariables in the payload.
     def test_create_container_job(self):
         expected_env_var = {
-            "CONTAINER_CUSTOM_IMAGE": "iad.ocir.io/ociodscdev/qq-repo/ubuntu",
+            "CONTAINER_CUSTOM_IMAGE": "iad.ocir.io/my_namespace/my_ubuntu_image",
             "CONTAINER_ENTRYPOINT": "/bin/sh",
             "CONTAINER_CMD": "-c,echo Hello World",
             "MY_ENV": "MY_VALUE",
@@ -27,18 +27,18 @@ class ContainerRuntimeTestCase(DataScienceJobPayloadTest):
         runtimes = [
             ContainerRuntime()
             .with_image(
-                "iad.ocir.io/ociodscdev/qq-repo/ubuntu",
+                "iad.ocir.io/my_namespace/my_ubuntu_image",
                 entrypoint="/bin/sh",
                 cmd="-c,echo Hello World",
             )
             .with_environment_variable(MY_ENV="MY_VALUE"),
             ContainerRuntime()
-            .with_image("iad.ocir.io/ociodscdev/qq-repo/ubuntu")
+            .with_image("iad.ocir.io/my_namespace/my_ubuntu_image")
             .with_cmd("-c,echo Hello World")
             .with_entrypoint("/bin/sh")
             .with_environment_variable(MY_ENV="MY_VALUE"),
             ContainerRuntime()
-            .with_image("iad.ocir.io/ociodscdev/qq-repo/ubuntu")
+            .with_image("iad.ocir.io/my_namespace/my_ubuntu_image")
             .with_cmd(["-c", "echo Hello World"])
             .with_entrypoint("/bin/sh")
             .with_environment_variable(MY_ENV="MY_VALUE"),

@@ -57,7 +57,6 @@ class JobSerializationTest(unittest.TestCase):
                             kind: infrastructure
                             spec:
                                 compartmentId: ocid1.compartment.oc1..<unique_ocid>
-                                jobInfrastructureType: ME_STANDALONE
                                 jobType: DEFAULT
                                 logGroupId: ocid1.loggroup.oc1.iad.<unique_ocid>
                                 logId: ocid1.log.oc1.iad.<unique_ocid>

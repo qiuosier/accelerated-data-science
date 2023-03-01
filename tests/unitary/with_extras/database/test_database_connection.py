@@ -29,7 +29,7 @@ class TestDatabaseConnection:
     key = "Testing"
     default_repository_path = os.path.join(os.path.expanduser("~"), ".database")
     fake_repo_path = "/tmp/nonexistent_path"
-    secret_id = "ocid1.vaultsecret.oc1.iad.unittestid"
+    secret_id = "ocid1.vaultsecret.oc1.iad.<unique_ocid>"
     wallet_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "../../../data/test_Wallet_DB202103311218.zip",
@@ -193,9 +193,7 @@ class TestDatabaseConnection:
 
     def test_connector_with_vault_secret_id_is_invalid(self):
         """Test making connection with vault, but secret_id_is_invalid."""
-        invalid_secret_id = (
-            "amaaaaaav66vvnia4gmx2eyl44zho6qco5o62g3ir7nsbws3mhdxxxvvasra"
-        )
+        invalid_secret_id = "aaaaaaaaaaaaaaaaaa"
         with pytest.raises(ValueError) as execinfo:
             connector = Connector(secret_id=invalid_secret_id)
         assert str(execinfo.value) == f"{invalid_secret_id} is not a valid secret id."
