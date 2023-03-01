@@ -86,6 +86,7 @@ jobs:
           NB_SESSION_COMPARTMENT_OCID: ocid1.compartment.oc1.<unique_ocid>
           CONDA_PREFIX: /usr/share/miniconda
         run: |
+          ls -l &&
           python -m pytest -v -p no:warnings --durations=5 \
           ${{ matrix.test-path }} \
           --ignore "${{ matrix.ignore-path }}" \
