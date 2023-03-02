@@ -87,7 +87,7 @@ jobs:
           CONDA_PREFIX: /usr/share/miniconda
         run: |
           python -c "import ads;print(ads.__file__)"
-          pip uninstall oracle-ads
+          pip uninstall oracle-ads -y
           python -m pytest -v -p no:warnings --durations=5 \
           ${{ matrix.test-path }} \
           --ignore "${{ matrix.ignore-path }}" \
